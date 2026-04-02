@@ -121,9 +121,13 @@ def predict(months: int = 1, start_date: date = None) -> list[dict]:
         raw_ratio_std = r["export_ratio_std"]
         ratio_std = float(raw_ratio_std) if raw_ratio_std and not _isnan(raw_ratio_std) and r["n"] > 1 else ratio_mean * 0.10
 
-        export_val = gen_val * ratio_mean
+        # Export cannot physically exceed generation (solar inverter limit).
+        # Some months have ratio > 1 due to CEB delegate visit timing or the
+        # 50/50 CEB split of merged pairs — cap to generation to keep results
+        # physically valid.
+        export_val = min(gen_val * ratio_mean, gen_val)
         export_lo  = gen_lo  * max(ratio_mean - 1.5 * ratio_std, 0)
-        export_hi  = gen_hi  * (ratio_mean + 1.5 * ratio_std)
+        export_hi  = min(gen_hi  * (ratio_mean + 1.5 * ratio_std), gen_hi)
 
         import_val = float(r["import_mean"])
 

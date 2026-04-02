@@ -92,7 +92,15 @@ def train():
                                     # Using linear/logistic growth caused
                                     # unrealistic extrapolation (e.g. Sep 2026
                                     # predicted at 1,100+ kWh).
-        yearly_seasonality=True,
+        yearly_seasonality=3,       # fourier_order=3 (6 terms) instead of the
+                                    # default 10 (20 terms). With only ~16
+                                    # training records, fourier_order=10 severely
+                                    # overfits — producing Jan=274, Aug=264 kWh
+                                    # predictions vs actuals of 512/634 kWh.
+                                    # order=3 captures the dominant annual cycle
+                                    # without fitting noise.
+        n_changepoints=0,           # changepoints are irrelevant with growth='flat'
+                                    # and cause overfitting on small datasets.
         weekly_seasonality=False,   # monthly data — weekly irrelevant
         daily_seasonality=False,
         interval_width=0.90,        # 90% confidence interval

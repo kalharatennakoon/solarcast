@@ -4,7 +4,7 @@
 
 - The goal is to predict **next month's solar generation (kWh)** and derive from it the **expected creditable export** and **cash received (LKR)**.
 - Generation is the only value predicted directly by the ML model. All other values are **derived** from it using historical seasonal ratios.
-- The model is trained on ~21 clean monthly records spanning April 2024 → March 2026.
+- The model is trained on 24 clean monthly records spanning April 2024 → March 2026.
 
 ---
 
@@ -28,40 +28,42 @@
 
 - **Feb 2024 (26–29 Feb):** System was installed at end of February. Only 4 days of data — excluded entirely.
 - **Feb–Mar 2024 merged pair:** Because Feb is excluded and the two months share one CEB reading, the entire pair is discarded. CEB values cannot be cleanly separated.
-- **All other merged pairs** (Apr–May 2024, Jan–Feb 2025, Jan–Feb 2026): Split into **two separate records**, one per month.
+- **All other merged pairs** (Apr–May 2024, Jan–Feb 2025, Jan–Feb 2026): Each month appears as its own row in the CSV with the 50/50 CEB split already applied at source. Both rows are included as **separate training records**.
   - Each month keeps its own real generation value (recorded individually by the inverter)
-  - Export, Import, Creditable Export, Cash = combined CEB reading ÷ 2 (50/50 split)
-  - This ensures every month has a training record — previously months like February had zero data, causing the model to predict 0 kWh
-- **Mar 2026:** Included for generation training (816 kWh confirmed). Cash is excluded from cash-related ratio computation (not yet received at time of training).
+  - Export, Import, Creditable Export, Cash = combined CEB reading ÷ 2 (50/50 split, pre-applied in CSV)
+- **Mar 2026:** Included with generation=816 kWh confirmed. Cash is excluded from cash-related ratio computation (not yet received at time of training).
 - Records with no creditable export value are dropped from the full pipeline training.
 
 ### Clean training records (after preprocessing)
 
 | # | Record | Generation (kWh) | Creditable Export (kWh) | Type |
 |---|---|---|---|---|
-| 1 | Apr–May 2024 avg | 638.5 | 561.0 | Merged avg |
-| 2 | Jun 2024 | 580 | 438 | Standalone |
-| 3 | Jul 2024 | 595 | 506 | Standalone |
-| 4 | Aug 2024 | 590 | 531 | Standalone |
-| 5 | Sep 2024 | 600 | 441 | Standalone |
-| 6 | Oct 2024 | 593 | 489 | Standalone |
-| 7 | Nov 2024 | 475 | 475 | Standalone |
-| 8 | Dec 2024 | 518 | 298 | Standalone |
-| 9 | Jan–Feb 2025 avg | 558.0 | 504.0 | Merged avg |
-| 10 | Mar 2025 | 690 | 552 | Standalone |
-| 11 | Apr 2025 | 675 | 598 | Standalone |
-| 12 | May 2025 | 612 | 495 | Standalone |
-| 13 | Jun 2025 | 608 | 458 | Standalone |
-| 14 | Jul 2025 | 622 | 509 | Standalone |
-| 15 | Aug 2025 | 634 | 569 | **← last training record** |
-| 16 | Sep 2025 | 568 | 471 | **← test set starts** |
-| 17 | Oct 2025 | 567 | 319 | Test |
-| 18 | Nov 2025 | 437 | 381 | Test |
-| 19 | Dec 2025 | 506 | 342 | Test |
-| 20 | Jan–Feb 2026 avg | 515.0 | 416.5 | Merged avg / Test |
-| 21 | Mar 2026 | 816 | 543 | Test |
+| 1 | Apr 2024 | 717 | 561 | Merged (50/50 split) |
+| 2 | May 2024 | 560 | 561 | Merged (50/50 split) |
+| 3 | Jun 2024 | 580 | 438 | Standalone |
+| 4 | Jul 2024 | 595 | 506 | Standalone |
+| 5 | Aug 2024 | 590 | 531 | Standalone |
+| 6 | Sep 2024 | 600 | 441 | Standalone |
+| 7 | Oct 2024 | 593 | 489 | Standalone |
+| 8 | Nov 2024 | 475 | 475 | Standalone |
+| 9 | Dec 2024 | 518 | 298 | Standalone |
+| 10 | Jan 2025 | 446 | 504 | Merged (50/50 split) |
+| 11 | Feb 2025 | 670 | 504 | Merged (50/50 split) |
+| 12 | Mar 2025 | 690 | 552 | Standalone |
+| 13 | Apr 2025 | 675 | 598 | Standalone |
+| 14 | May 2025 | 612 | 495 | Standalone |
+| 15 | Jun 2025 | 608 | 458 | Standalone |
+| 16 | Jul 2025 | 622 | 509 | **← last training record** |
+| 17 | Aug 2025 | 634 | 569 | **← test set starts** |
+| 18 | Sep 2025 | 568 | 471 | Test |
+| 19 | Oct 2025 | 567 | 319 | Test |
+| 20 | Nov 2025 | 437 | 381 | Test |
+| 21 | Dec 2025 | 506 | 342 | Test |
+| 22 | Jan 2026 | 512 | 416.5 | Merged (50/50 split) / Test |
+| 23 | Feb 2026 | 518 | 416.5 | Merged (50/50 split) / Test |
+| 24 | Mar 2026 | 816 | 543 | Test |
 
-**Total: 21 records — 15 training (70%) / 6 test (30%)**
+**Total: 24 records — 16 training (70%) / 8 test (30%)**
 
 > The split is **chronological** — training always precedes test. Shuffling time-series data would cause data leakage.
 
@@ -92,7 +94,8 @@ ds          y
 
 | Setting | Value | Reason |
 |---|---|---|
-| `yearly_seasonality` | `True` | Solar generation follows annual cycles |
+| `yearly_seasonality` | `3` | Fourier order 3 (6 terms). Default `True` uses order 10 (20 terms) which severely overfits on 16 records — produced Jan=274, Aug=264 kWh vs actuals of 512/634 kWh. Order 3 captures the dominant annual cycle without fitting noise. |
+| `n_changepoints` | `0` | Changepoints are irrelevant with `growth='flat'` and cause overfitting on small datasets. |
 | `weekly_seasonality` | `False` | Monthly data — not applicable |
 | `daily_seasonality` | `False` | Monthly data — not applicable |
 | `interval_width` | `0.90` | 90% confidence interval on predictions |
@@ -138,9 +141,14 @@ Given a target month with calendar month number `m`:
 
 ```
 gen       = Prophet.yhat          (point estimate)
-gen_lower = Prophet.yhat_lower    (90% CI lower)
-gen_upper = Prophet.yhat_upper    (90% CI upper)
+gen_lower = max(gen − 1.645 × generation_std[m], 0)
+gen_upper = gen + 1.645 × generation_std[m]
 ```
+
+> Prophet's built-in `yhat_lower`/`yhat_upper` collapse to zero width with `growth='flat'`
+> and MAP optimisation (non-MCMC). The CI is instead computed from the observed monthly
+> generation std in the training set (1.645σ = 90% CI for a normal distribution).
+> For months with only 1 training record (no std), a 10% fallback is used.
 
 ### Step 2 — Derive export
 
@@ -185,9 +193,9 @@ cash_upper = creditable_export_upper × 37
 
 ## Confidence Intervals
 
-- Generation confidence comes directly from Prophet's Bayesian posterior — it reflects both trend uncertainty and seasonal uncertainty.
-- Export and cash confidence additionally incorporate the **variability in the historical export/generation ratio** for that calendar month.
-- Wider intervals in months with fewer historical observations (e.g. month 2 — only one Feb in training data).
+- **Generation CI:** Prophet's built-in `yhat_lower/upper` collapse to zero with `growth='flat'` + MAP optimisation. The CI is computed from observed per-month generation std in the training set using `1.645σ` (90% normal CI). Months with only one training sample fall back to ±10%.
+- **Export and cash CI** additionally incorporate the variability in the historical export/generation ratio for that calendar month (±1.5 × ratio std).
+- Wider intervals in months with fewer historical observations (many months have only 1 training record in the current dataset).
 - All intervals are **90% confidence intervals**.
 - The UI displays confidence as a range (`lower – upper`) and a `±N%` badge (half-width relative to the point estimate).
 
@@ -218,7 +226,7 @@ python predict.py 3   # prints predictions for next 3 months
 
 ## Known Limitations
 
-- **Small dataset (~21 records).** Prophet handles small datasets reasonably well due to its Bayesian priors, but predictions beyond 3–6 months carry increasing uncertainty.
+- **Small dataset (24 records, 16 training).** Prophet handles small datasets reasonably well due to its Bayesian priors, but predictions beyond 3–6 months carry increasing uncertainty. Most calendar months have only 1–2 training samples, so seasonality estimates are rough.
 - **Merged month averaging** introduces a small approximation. The averaged record is placed at the first month of the pair, which may slightly shift the learned seasonal curve.
 - **Import is not predicted — it is averaged.** If your grid consumption changes significantly (e.g. new appliances, EV charging), the model will underestimate or overestimate creditable export.
 - **The LKR 37/unit rate is hardcoded.** If the CEB rate changes, `RATE_PER_UNIT` in `predict.py` must be updated.
