@@ -15,7 +15,10 @@ def _model_trained() -> bool:
 
 def _read_trained_at() -> str | None:
     path = MODELS_DIR / "trained_at.txt"
-    return path.read_text().strip() if path.exists() else None
+    if not path.exists():
+        return None
+    first_line = path.read_text().splitlines()[0].strip()
+    return first_line or None
 
 
 @router.get("/predict", response_model=PredictResponse)

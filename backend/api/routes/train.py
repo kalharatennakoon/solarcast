@@ -11,7 +11,10 @@ MODELS_DIR = Path(__file__).parent.parent.parent / "model" / "saved_models"
 
 def _read_trained_at() -> str | None:
     path = MODELS_DIR / "trained_at.txt"
-    return path.read_text().strip() if path.exists() else None
+    if not path.exists():
+        return None
+    first_line = path.read_text().splitlines()[0].strip()
+    return first_line or None
 
 
 @router.post("/train", response_model=TrainResponse)

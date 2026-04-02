@@ -6,12 +6,8 @@ import { fetchHistory, fetchPredictions, fetchStatus, trainModel } from '../api'
 import './Dashboard.css'
 
 
-function formatTrainedAt(isoString) {
-  const d = new Date(isoString)
-  return d.toLocaleString(undefined, {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  })
+function formatTrainedAt(timestamp) {
+  return timestamp
 }
 
 const PERIOD_OPTIONS = [
