@@ -9,64 +9,73 @@ import './Dashboard.css'
 // Missing cells (Mar/May 2024, Feb 2025, Feb 2026) will be filled when the user
 // provides the data.
 const HISTORY_2024 = [
-  { period: 'Feb 2024', month: 'February', note: 'Partial (26–29 Feb)',
-    generation: 155,  export: 792,  import: 69,  creditableExport: 723,  cash: 25414.40 },
+  { period: 'Feb 2024', month: 'February',
+    generation: 155,  export: 792,  import: 69,  creditableExport: 723,  totalCash: 26751.00, cash: 25414.40,
+    mergeGroup: 'Feb–Mar', excludeTraining: true,  note: 'Partial month (26–29 Feb); export/import/cash are combined total for Feb+Mar' },
   { period: 'Mar 2024', month: 'March',
-    generation: 782,  export: null, import: null, creditableExport: null, cash: null },
+    generation: 782,  export: null, import: null, creditableExport: null, totalCash: null,     cash: null,
+    mergeGroup: 'Feb–Mar', excludeTraining: false, note: 'Export/import/cash recorded together with February' },
   { period: 'Apr 2024', month: 'April',
-    generation: 717,  export: 1230, import: 108, creditableExport: 1122, cash: 41514.00 },
+    generation: 717,  export: 1230, import: 108, creditableExport: 1122, totalCash: 41514.00, cash: 41514.00,
+    mergeGroup: 'Apr–May', excludeTraining: false, note: 'Export/import/cash are combined total for Apr+May' },
   { period: 'May 2024', month: 'May',
-    generation: 560,  export: null, import: null, creditableExport: null, cash: null },
+    generation: 560,  export: null, import: null, creditableExport: null, totalCash: null,     cash: null,
+    mergeGroup: 'Apr–May', excludeTraining: false, note: 'Export/import/cash recorded together with April' },
   { period: 'Jun 2024', month: 'June',
-    generation: 580,  export: 501,  import: 63,  creditableExport: 438,  cash: 16206.00 },
+    generation: 580,  export: 501,  import: 63,  creditableExport: 438,  totalCash: 16206.00, cash: 16206.00 },
   { period: 'Jul 2024', month: 'July',
-    generation: 595,  export: 556,  import: 50,  creditableExport: 506,  cash: 18722.00 },
+    generation: 595,  export: 556,  import: 50,  creditableExport: 506,  totalCash: 18722.00, cash: 18722.00 },
   { period: 'Aug 2024', month: 'August',
-    generation: 590,  export: 593,  import: 62,  creditableExport: 531,  cash: 19647.00 },
+    generation: 590,  export: 593,  import: 62,  creditableExport: 531,  totalCash: 19647.00, cash: 19647.00 },
   { period: 'Sep 2024', month: 'September',
-    generation: 600,  export: 492,  import: 51,  creditableExport: 441,  cash: 16317.00 },
+    generation: 600,  export: 492,  import: 51,  creditableExport: 441,  totalCash: 16317.00, cash: 16317.00 },
   { period: 'Oct 2024', month: 'October',
-    generation: 593,  export: 554,  import: 65,  creditableExport: 489,  cash: 18093.00 },
+    generation: 593,  export: 554,  import: 65,  creditableExport: 489,  totalCash: 18093.00, cash: 18093.00 },
   { period: 'Nov 2024', month: 'November',
-    generation: 475,  export: 539,  import: 64,  creditableExport: 475,  cash: 17472.44 },
+    generation: 475,  export: 539,  import: 64,  creditableExport: 475,  totalCash: 17575.00, cash: 17472.44 },
   { period: 'Dec 2024', month: 'December',
-    generation: 518,  export: 350,  import: 52,  creditableExport: 298,  cash: 10923.44 },
+    generation: 518,  export: 350,  import: 52,  creditableExport: 298,  totalCash: 11026.00, cash: 10923.44 },
 ]
 
 const HISTORY_2025 = [
   { period: 'Jan 2025', month: 'January',
-    generation: 446,  export: 1134, import: 126, creditableExport: 1008, cash: 37296.00 },
+    generation: 446,  export: 1134, import: 126, creditableExport: 1008, totalCash: 37296.00, cash: 37296.00,
+    mergeGroup: 'Jan–Feb', excludeTraining: false, note: 'Export/import/cash are combined total for Jan+Feb' },
   { period: 'Feb 2025', month: 'February',
-    generation: 670,  export: null, import: null, creditableExport: null, cash: null },
+    generation: 670,  export: null, import: null, creditableExport: null, totalCash: null,     cash: null,
+    mergeGroup: 'Jan–Feb', excludeTraining: false, note: 'Export/import/cash recorded together with January' },
   { period: 'Mar 2025', month: 'March',
-    generation: 690,  export: 617,  import: 65,  creditableExport: 552,  cash: 20424.00 },
+    generation: 690,  export: 617,  import: 65,  creditableExport: 552,  totalCash: 20424.00, cash: 20424.00 },
   { period: 'Apr 2025', month: 'April',
-    generation: 675,  export: 664,  import: 66,  creditableExport: 598,  cash: 22126.00 },
+    generation: 675,  export: 664,  import: 66,  creditableExport: 598,  totalCash: 22126.00, cash: 22126.00 },
   { period: 'May 2025', month: 'May',
-    generation: 612,  export: 553,  import: 58,  creditableExport: 495,  cash: 18315.00 },
+    generation: 612,  export: 553,  import: 58,  creditableExport: 495,  totalCash: 18315.00, cash: 18315.00 },
   { period: 'Jun 2025', month: 'June',
-    generation: 608,  export: 509,  import: 51,  creditableExport: 458,  cash: 16946.00 },
+    generation: 608,  export: 509,  import: 51,  creditableExport: 458,  totalCash: 16946.00, cash: 16946.00 },
   { period: 'Jul 2025', month: 'July',
-    generation: 622,  export: 569,  import: 60,  creditableExport: 509,  cash: 18833.00 },
+    generation: 622,  export: 569,  import: 60,  creditableExport: 509,  totalCash: 18833.00, cash: 18833.00 },
   { period: 'Aug 2025', month: 'August',
-    generation: 634,  export: 634,  import: 65,  creditableExport: 569,  cash: 20970.95 },
+    generation: 634,  export: 634,  import: 65,  creditableExport: 569,  totalCash: 21053.00, cash: 20970.95 },
   { period: 'Sep 2025', month: 'September',
-    generation: 568,  export: 536,  import: 65,  creditableExport: 471,  cash: 17344.95 },
+    generation: 568,  export: 536,  import: 65,  creditableExport: 471,  totalCash: 17427.00, cash: 17344.95 },
   { period: 'Oct 2025', month: 'October',
-    generation: 567,  export: 361,  import: 42,  creditableExport: 319,  cash: 11720.95 },
+    generation: 567,  export: 361,  import: 42,  creditableExport: 319,  totalCash: 11803.00, cash: 11720.95 },
   { period: 'Nov 2025', month: 'November',
-    generation: 437,  export: 436,  import: 55,  creditableExport: 381,  cash: 14014.95 },
+    generation: 437,  export: 436,  import: 55,  creditableExport: 381,  totalCash: 14097.00, cash: 14014.95 },
   { period: 'Dec 2025', month: 'December',
-    generation: 506,  export: 408,  import: 66,  creditableExport: 342,  cash: 12572.00 },
+    generation: 506,  export: 408,  import: 66,  creditableExport: 342,  totalCash: 12654.00, cash: 12572.00 },
 ]
 
 const HISTORY_2026 = [
   { period: 'Jan 2026', month: 'January',
-    generation: 512,  export: 953,  import: 120, creditableExport: 833,  cash: 30631.90 },
+    generation: 512,  export: 953,  import: 120, creditableExport: 833,  totalCash: 30821.00, cash: 30631.90,
+    mergeGroup: 'Jan–Feb', excludeTraining: false, note: 'Export/import/cash are combined total for Jan+Feb' },
   { period: 'Feb 2026', month: 'February',
-    generation: 518,  export: null, import: null, creditableExport: null, cash: null },
+    generation: 518,  export: null, import: null, creditableExport: null, totalCash: null,     cash: null,
+    mergeGroup: 'Jan–Feb', excludeTraining: false, note: 'Export/import/cash recorded together with January' },
   { period: 'Mar 2026', month: 'March',
-    generation: 816,  export: 608,  import: 65,  creditableExport: 543,  cash: null },
+    generation: 816,  export: 608,  import: 65,  creditableExport: 543,  totalCash: 20091.00, cash: null,
+    note: 'Cash not yet received (expected April 20–28, 2026)' },
 ]
 
 const HISTORY_BY_YEAR = [
@@ -81,7 +90,13 @@ const CHART_DATA = [...HISTORY_2024, ...HISTORY_2025, ...HISTORY_2026]
 
 // ── Mock predictions (placeholder until model is trained) ─────────────────────
 // Values are estimates — will be replaced by POST /predict API response.
+// Predictions start from April 2026 — the current predictive month.
+// Even though today is April 2026, April is still predictive because:
+// (a) the CEB delegate hasn't visited yet this month, and
+// (b) March 2026's cash hasn't been received yet (expected April 20–28).
+// Will be replaced by POST /predict API response once the model is trained.
 const MOCK_PREDICTIONS = [
+  { month: 'Apr 2026',  generation: { v: 650, lo: 585, hi: 715 }, creditableExport: { v: 555, lo: 495, hi: 615 }, cash: { v: 20535.00, lo: 18315.00, hi: 22755.00 } },
   { month: 'May 2026',  generation: { v: 580, lo: 520, hi: 640 }, creditableExport: { v: 510, lo: 450, hi: 570 }, cash: { v: 18870.00, lo: 16650.00, hi: 21090.00 } },
   { month: 'Jun 2026',  generation: { v: 560, lo: 500, hi: 620 }, creditableExport: { v: 488, lo: 428, hi: 548 }, cash: { v: 18056.00, lo: 15836.00, hi: 20276.00 } },
   { month: 'Jul 2026',  generation: { v: 600, lo: 540, hi: 660 }, creditableExport: { v: 520, lo: 460, hi: 580 }, cash: { v: 19240.00, lo: 17020.00, hi: 21460.00 } },
@@ -93,7 +108,6 @@ const MOCK_PREDICTIONS = [
   { month: 'Jan 2027',  generation: { v: 480, lo: 420, hi: 540 }, creditableExport: { v: 920, lo: 860, hi: 980 }, cash: { v: 34040.00, lo: 31820.00, hi: 36260.00 } },
   { month: 'Feb 2027',  generation: { v: 640, lo: 576, hi: 704 }, creditableExport: { v: 570, lo: 506, hi: 634 }, cash: { v: 21090.00, lo: 18722.00, hi: 23458.00 } },
   { month: 'Mar 2027',  generation: { v: 760, lo: 684, hi: 836 }, creditableExport: { v: 590, lo: 526, hi: 654 }, cash: { v: 21830.00, lo: 19462.00, hi: 24198.00 } },
-  { month: 'Apr 2027',  generation: { v: 690, lo: 621, hi: 759 }, creditableExport: { v: 610, lo: 546, hi: 674 }, cash: { v: 22570.00, lo: 20202.00, hi: 24938.00 } },
 ]
 
 const PERIOD_OPTIONS = [
