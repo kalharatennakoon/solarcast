@@ -102,6 +102,12 @@
   flex-wrap: wrap;
 }
 
+.cards-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-top: 10px;
+}
+
 /* ── Chart card ── */
 .chart-card {
   background: var(--color-surface);

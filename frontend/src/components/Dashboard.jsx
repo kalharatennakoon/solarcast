@@ -177,7 +177,7 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-        <div className="cards-row">
+        <div className="cards-row" id="prediction-cards">
           <PredictionCard
             label="Solar Generation"
             icon="⚡"
@@ -215,6 +215,9 @@ export default function Dashboard() {
             }))}
           />
         </div>
+        <p className="cards-hint">
+          The model is 90% confident the real outcome will land within that range. The ±% shows how wide the range is — a smaller ±% means a tighter, more precise prediction.
+        </p>
       </section>
 
       {/* ── Historical chart ── */}

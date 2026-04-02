@@ -75,7 +75,18 @@
   background: var(--color-bg);
   padding: 4px 9px;
   border-radius: 6px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confidence-pct {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--card-color);
+  background: color-mix(in srgb, var(--card-color) 12%, transparent);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 /* ── Multi-month ── */

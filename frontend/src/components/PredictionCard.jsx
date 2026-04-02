@@ -11,6 +11,11 @@ export default function PredictionCard({ label, icon, unit, color, predictions }
   const single = predictions.length === 1
   const first  = predictions[0]
 
+  // Confidence expressed as ±% half-width relative to the point estimate
+  const confidencePct = first.value > 0
+    ? Math.round(((first.upper - first.lower) / 2 / first.value) * 100)
+    : 0
+
   return (
     <div className="prediction-card" style={{ '--card-color': color }}>
       <div className="card-accent" />
@@ -28,6 +33,7 @@ export default function PredictionCard({ label, icon, unit, color, predictions }
           </div>
           <div className="card-range">
             {formatValue(first.lower, unit)} – {formatValue(first.upper, unit)} {unit}
+            <span className="confidence-pct">±{confidencePct}%</span>
           </div>
         </div>
       ) : (
