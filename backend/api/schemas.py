@@ -56,9 +56,11 @@ class TrainResponse(BaseModel):
     testRecords: int
     trainPeriod: str
     testPeriod: str
+    lastTrainedAt: Optional[str]
 
 
 # ── Status ────────────────────────────────────────────────────────────────────
 
 class StatusResponse(BaseModel):
     modelTrained: bool
+    lastTrainedAt: Optional[str]

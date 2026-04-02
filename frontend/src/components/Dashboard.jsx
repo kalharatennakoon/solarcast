@@ -6,6 +6,14 @@ import { fetchHistory, fetchPredictions, fetchStatus, trainModel } from '../api'
 import './Dashboard.css'
 
 
+function formatTrainedAt(isoString) {
+  const d = new Date(isoString)
+  return d.toLocaleString(undefined, {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  })
+}
+
 const PERIOD_OPTIONS = [
   { label: 'Next 1 Month',  value: 1 },
   { label: 'Next 3 Months', value: 3 },
@@ -17,6 +25,7 @@ const PERIOD_OPTIONS = [
 export default function Dashboard() {
   const [period, setPeriod]             = useState(1)
   const [modelStatus, setModelStatus]   = useState('untrained')
+  const [lastTrainedAt, setLastTrainedAt] = useState(null)
   const [predictions, setPredictions]   = useState([])
   const [historyByYear, setHistoryByYear] = useState([])
   const [chartData, setChartData]       = useState([])
@@ -27,9 +36,10 @@ export default function Dashboard() {
   // On mount: check model status and load history
   useEffect(() => {
     fetchStatus()
-      .then(({ modelTrained }) => {
+      .then(({ modelTrained, lastTrainedAt }) => {
         setBackendUp(true)
         setModelStatus(modelTrained ? 'ready' : 'untrained')
+        setLastTrainedAt(lastTrainedAt ?? null)
       })
       .catch(() => {
         setBackendUp(false)
@@ -84,8 +94,9 @@ export default function Dashboard() {
   async function handleTrain() {
     setModelStatus('training')
     try {
-      await trainModel()
+      const result = await trainModel()
       setModelStatus('ready')
+      setLastTrainedAt(result.lastTrainedAt ?? null)
     } catch {
       setModelStatus('error')
     }
@@ -119,6 +130,11 @@ export default function Dashboard() {
         </div>
         <div className="train-area">
           {statusBadge}
+          {lastTrainedAt && (
+            <span className="last-trained">
+              Last trained: {formatTrainedAt(lastTrainedAt)}
+            </span>
+          )}
           <button
             className="train-btn"
             onClick={handleTrain}

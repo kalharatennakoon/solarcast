@@ -21,6 +21,7 @@ Split: 70% training / 30% test (chronological order, never shuffled).
 """
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
@@ -123,6 +124,11 @@ def train():
     test_path = MODELS_DIR / "test_set.csv"
     test_df.to_csv(test_path, index=False)
     print(f"Test set saved → {test_path}")
+
+    # ── Record training timestamp ─────────────────────────────────────────
+    trained_at = datetime.now(timezone.utc).isoformat()
+    (MODELS_DIR / "trained_at.txt").write_text(trained_at)
+    print(f"Trained at: {trained_at}")
 
     return model, ratios
 

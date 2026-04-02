@@ -52,6 +52,12 @@
   gap: 12px;
 }
 
+.last-trained {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
 .train-btn {
   padding: 8px 20px;
   background: var(--color-primary);

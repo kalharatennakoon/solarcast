@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import APIRouter
 
-from api.schemas import PredictResponse, PredictionMonth, Interval
+from api.schemas import PredictResponse, PredictionMonth, Interval, StatusResponse
 
 router = APIRouter()
 
@@ -11,6 +11,11 @@ MODELS_DIR = Path(__file__).parent.parent.parent / "model" / "saved_models"
 
 def _model_trained() -> bool:
     return (MODELS_DIR / "prophet_generation.pkl").exists()
+
+
+def _read_trained_at() -> str | None:
+    path = MODELS_DIR / "trained_at.txt"
+    return path.read_text().strip() if path.exists() else None
 
 
 @router.get("/predict", response_model=PredictResponse)
@@ -40,7 +45,10 @@ def get_predictions(months: int = 1):
     return PredictResponse(modelTrained=True, predictions=predictions)
 
 
-@router.get("/status")
+@router.get("/status", response_model=StatusResponse)
 def get_status():
-    """Returns whether the model has been trained."""
-    return {"modelTrained": _model_trained()}
+    """Returns whether the model has been trained and when it was last trained."""
+    return StatusResponse(
+        modelTrained=_model_trained(),
+        lastTrainedAt=_read_trained_at(),
+    )
