@@ -1,5 +1,23 @@
-.chart-wrapper {
-  width: 100%;
+.chart-scroll-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.chart-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chart-scroll-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
 .chart-tooltip {
@@ -8,7 +26,7 @@
   padding: 10px 14px;
   color: white;
   font-size: 0.85rem;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .tooltip-label {

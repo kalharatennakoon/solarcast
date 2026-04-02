@@ -1,0 +1,177 @@
+.history-table-block {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+}
+
+.year-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--color-surface);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.year-toggle:hover {
+  background: #f8fafc;
+}
+
+.year-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  min-width: 48px;
+}
+
+.year-summary {
+  font-size: 0.83rem;
+  color: var(--color-text-muted);
+  flex: 1;
+}
+
+.toggle-icon {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-top: 1px solid var(--color-border);
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  min-width: 700px;
+}
+
+.history-table thead tr {
+  background: #f8fafc;
+}
+
+.history-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.history-table td {
+  padding: 10px 14px;
+  color: var(--color-text);
+  border-bottom: 1px solid #f1f5f9;
+  white-space: nowrap;
+}
+
+.history-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.history-table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.td-month {
+  font-weight: 600;
+}
+
+.td-missing {
+  color: var(--color-text-muted);
+}
+
+.td-note {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  min-width: 260px;
+}
+
+/* Merged month rows */
+.row-merged td {
+  background: #fffbeb;
+}
+
+.row-merged:hover td {
+  background: #fef3c7 !important;
+}
+
+/* Excluded from training (partial month) */
+.row-excluded td {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.row-excluded:hover td {
+  background: #fee2e2 !important;
+}
+
+/* Combined subtotal row */
+.row-subtotal td {
+  background: #1e293b;
+  color: #f8fafc;
+  border-bottom: none;
+}
+
+.row-subtotal:hover td {
+  background: #334155 !important;
+}
+
+.td-subtotal-label {
+  font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  padding-left: 14px !important;
+}
+
+.td-subtotal-value {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.td-subtotal-note {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Merge group badge */
+.merge-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #fde68a;
+  color: #92400e;
+  white-space: nowrap;
+}
+
+.merge-badge-excluded {
+  background: #fecaca;
+  color: #991b1b;
+}
