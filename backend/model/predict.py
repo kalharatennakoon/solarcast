@@ -60,8 +60,9 @@ def predict(months: int = 1, start_date: date = None) -> list[dict]:
     months : int
         Number of future months to predict (1, 3, 6, or 12).
     start_date : date, optional
-        First month to predict. Defaults to the first day of next month
-        relative to today.
+        First month to predict. Defaults to the first day of the current month
+        — the current month is always predictive since final values (CEB
+        delegate reading, cash received) are not known until the month ends.
 
     Returns
     -------
@@ -77,11 +78,10 @@ def predict(months: int = 1, start_date: date = None) -> list[dict]:
 
     if start_date is None:
         today = date.today()
-        # First day of next month
-        if today.month == 12:
-            start_date = date(today.year + 1, 1, 1)
-        else:
-            start_date = date(today.year, today.month + 1, 1)
+        # Start from the first day of the current month — the current month is
+        # always predictive since CEB readings and cash are only confirmed after
+        # the month ends.
+        start_date = date(today.year, today.month, 1)
 
     # Build future DataFrame for Prophet (needs 'ds' column)
     future_dates = pd.date_range(start=start_date, periods=months, freq="MS")
