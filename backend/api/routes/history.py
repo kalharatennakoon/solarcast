@@ -1,3 +1,4 @@
+import calendar
 import math
 from fastapi import APIRouter, HTTPException
 
@@ -23,8 +24,8 @@ def _clean(value):
 def get_history():
     """
     Returns all historical solar records grouped by year.
-    Months with missing CEB delegate readings have null values for
-    export, import, creditable export and cash.
+    Merged month pairs show the 50/50 split CEB values already stored in the
+    CSV — each month has its own row with equal share of the combined reading.
     """
     try:
         raw = load_raw()
@@ -34,18 +35,14 @@ def get_history():
     year_map: dict[int, list[HistoryRow]] = {}
 
     for _, row in raw.iterrows():
-        year = int(row["year"])
-        month = str(row["month"]).strip()
+        year      = int(row["year"])
+        month     = str(row["month"]).strip()
         month_num = int(row["month_num"])
-
-        # Short month + year label, e.g. "Jun 2024"
-        import calendar
-        month_abbr = calendar.month_abbr[month_num]
-        period = f"{month_abbr} {year}"
+        period    = f"{calendar.month_abbr[month_num]} {year}"
 
         merge_group = row["merge_group"] if row["merge_group"] != "" else None
-        note_val = row.get("notes", None)
-        note = str(note_val).strip() if note_val and str(note_val) != "nan" else None
+        note_val    = row.get("notes", None)
+        note        = str(note_val).strip() if note_val and str(note_val) != "nan" else None
 
         record = HistoryRow(
             period=period,
