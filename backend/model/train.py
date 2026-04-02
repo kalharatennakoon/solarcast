@@ -56,6 +56,8 @@ def compute_seasonal_ratios(train_df: pd.DataFrame) -> dict:
                 ),
                 "import_mean": float(train_df["import_kwh"].mean()),
                 "import_std": float(train_df["import_kwh"].std()),
+                "generation_mean": float(train_df["generation"].mean()),
+                "generation_std": float(train_df["generation"].std()),
                 "n": 0,
             }
         else:
@@ -65,6 +67,8 @@ def compute_seasonal_ratios(train_df: pd.DataFrame) -> dict:
                 "export_ratio_std": float(export_ratios.std()),
                 "import_mean": float(subset["import_kwh"].mean()),
                 "import_std": float(subset["import_kwh"].std()),
+                "generation_mean": float(subset["generation"].mean()),
+                "generation_std": float(subset["generation"].std()),
                 "n": len(subset),
             }
     return ratios
@@ -83,6 +87,11 @@ def train():
     prophet_df = train_df[["ds", "generation"]].rename(columns={"generation": "y"})
 
     model = Prophet(
+        growth="flat",              # solar output has no long-term trend —
+                                    # predictions based purely on seasonality.
+                                    # Using linear/logistic growth caused
+                                    # unrealistic extrapolation (e.g. Sep 2026
+                                    # predicted at 1,100+ kWh).
         yearly_seasonality=True,
         weekly_seasonality=False,   # monthly data — weekly irrelevant
         daily_seasonality=False,

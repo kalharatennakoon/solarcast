@@ -66,6 +66,7 @@ export default function Dashboard() {
       setPredictions([])
       return
     }
+    setPredictions([])
     setLoadingPredictions(true)
     fetchPredictions(period)
       .then(({ predictions: preds }) => {
@@ -110,7 +111,6 @@ export default function Dashboard() {
             id="period-select"
             value={period}
             onChange={e => setPeriod(Number(e.target.value))}
-            disabled={!hasPredictions}
           >
             {PERIOD_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>{o.label}</option>

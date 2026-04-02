@@ -1,6 +1,7 @@
 import './PredictionCard.css'
 
 function formatValue(value, unit) {
+  if (value === null || value === undefined) return '—'
   if (unit === 'LKR') {
     return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
@@ -8,6 +9,8 @@ function formatValue(value, unit) {
 }
 
 export default function PredictionCard({ label, icon, unit, color, predictions }) {
+  if (!predictions || predictions.length === 0) return null
+
   const single = predictions.length === 1
   const first  = predictions[0]
 
