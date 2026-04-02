@@ -21,6 +21,7 @@ Split: 70% training / 30% test (chronological order, never shuffled).
 """
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
@@ -28,7 +29,7 @@ import numpy as np
 import pandas as pd
 from prophet import Prophet
 
-from preprocess import preprocess, train_test_split
+from model.preprocess import preprocess, train_test_split
 
 MODELS_DIR = Path(__file__).parent / "saved_models"
 MODELS_DIR.mkdir(exist_ok=True)
@@ -56,6 +57,8 @@ def compute_seasonal_ratios(train_df: pd.DataFrame) -> dict:
                 ),
                 "import_mean": float(train_df["import_kwh"].mean()),
                 "import_std": float(train_df["import_kwh"].std()),
+                "generation_mean": float(train_df["generation"].mean()),
+                "generation_std": float(train_df["generation"].std()),
                 "n": 0,
             }
         else:
@@ -65,6 +68,8 @@ def compute_seasonal_ratios(train_df: pd.DataFrame) -> dict:
                 "export_ratio_std": float(export_ratios.std()),
                 "import_mean": float(subset["import_kwh"].mean()),
                 "import_std": float(subset["import_kwh"].std()),
+                "generation_mean": float(subset["generation"].mean()),
+                "generation_std": float(subset["generation"].std()),
                 "n": len(subset),
             }
     return ratios
@@ -83,7 +88,20 @@ def train():
     prophet_df = train_df[["ds", "generation"]].rename(columns={"generation": "y"})
 
     model = Prophet(
-        yearly_seasonality=True,
+        growth="flat",              # solar output has no long-term trend —
+                                    # predictions based purely on seasonality.
+                                    # Using linear/logistic growth caused
+                                    # unrealistic extrapolation (e.g. Sep 2026
+                                    # predicted at 1,100+ kWh).
+        yearly_seasonality=3,       # fourier_order=3 (6 terms) instead of the
+                                    # default 10 (20 terms). With only ~16
+                                    # training records, fourier_order=10 severely
+                                    # overfits — producing Jan=274, Aug=264 kWh
+                                    # predictions vs actuals of 512/634 kWh.
+                                    # order=3 captures the dominant annual cycle
+                                    # without fitting noise.
+        n_changepoints=0,           # changepoints are irrelevant with growth='flat'
+                                    # and cause overfitting on small datasets.
         weekly_seasonality=False,   # monthly data — weekly irrelevant
         daily_seasonality=False,
         interval_width=0.90,        # 90% confidence interval
@@ -106,6 +124,11 @@ def train():
     test_path = MODELS_DIR / "test_set.csv"
     test_df.to_csv(test_path, index=False)
     print(f"Test set saved → {test_path}")
+
+    # ── Record training timestamp ─────────────────────────────────────────
+    trained_at = datetime.now(timezone.utc).isoformat()
+    (MODELS_DIR / "trained_at.txt").write_text(trained_at)
+    print(f"Trained at: {trained_at}")
 
     return model, ratios
 

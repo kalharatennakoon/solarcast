@@ -1,0 +1,8 @@
+{
+  "name": "solar-predictor",
+  "private": true,
+  "scripts": {
+    "frontend": "cd frontend && npm run dev",
+    "backend": "cd backend && bash start.sh"
+  }
+}

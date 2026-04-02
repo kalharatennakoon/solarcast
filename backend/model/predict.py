@@ -24,7 +24,12 @@ Step 5  Total cash (LKR):
 
 Confidence propagation
 ----------------------
-  generation_lo / hi  → from Prophet yhat_lower / yhat_upper
+  generation_lo / hi  → yhat ± 1.645 × generation_std[month]
+                        (1.645σ = 90% CI for a normal distribution)
+                        Uses historical std per calendar month from training data.
+                        Prophet's built-in interval collapses to zero with
+                        growth='flat' and small datasets, so we compute it
+                        from observed monthly variance instead.
   export_lo           = generation_lo × (ratio_mean − 1.5 × ratio_std)
   export_hi           = generation_hi × (ratio_mean + 1.5 × ratio_std)
   creditable_lo       = export_lo − import_mean
@@ -34,11 +39,19 @@ Confidence propagation
 """
 
 import json
+import math
 from datetime import date
 from pathlib import Path
 
 import joblib
 import pandas as pd
+
+
+def _isnan(v):
+    try:
+        return math.isnan(v)
+    except (TypeError, ValueError):
+        return False
 
 MODELS_DIR = Path(__file__).parent / "saved_models"
 RATE_PER_UNIT = 37  # LKR per kWh
@@ -60,8 +73,9 @@ def predict(months: int = 1, start_date: date = None) -> list[dict]:
     months : int
         Number of future months to predict (1, 3, 6, or 12).
     start_date : date, optional
-        First month to predict. Defaults to the first day of next month
-        relative to today.
+        First month to predict. Defaults to the first day of the current month
+        — the current month is always predictive since final values (CEB
+        delegate reading, cash received) are not known until the month ends.
 
     Returns
     -------
@@ -77,11 +91,10 @@ def predict(months: int = 1, start_date: date = None) -> list[dict]:
 
     if start_date is None:
         today = date.today()
-        # First day of next month
-        if today.month == 12:
-            start_date = date(today.year + 1, 1, 1)
-        else:
-            start_date = date(today.year, today.month + 1, 1)
+        # Start from the first day of the current month — the current month is
+        # always predictive since CEB readings and cash are only confirmed after
+        # the month ends.
+        start_date = date(today.year, today.month, 1)
 
     # Build future DataFrame for Prophet (needs 'ds' column)
     future_dates = pd.date_range(start=start_date, periods=months, freq="MS")
@@ -95,18 +108,28 @@ def predict(months: int = 1, start_date: date = None) -> list[dict]:
         label = row["ds"].strftime("%b %Y")
         r = ratios[month_num]
 
-        gen_val = max(row["yhat"], 0)
-        gen_lo  = max(row["yhat_lower"], 0)
-        gen_hi  = max(row["yhat_upper"], 0)
+        gen_val = max(float(row["yhat"]), 0)
 
-        ratio_mean = r["export_ratio_mean"]
-        ratio_std  = r["export_ratio_std"] if r["n"] > 1 else ratio_mean * 0.10
+        # Build generation CI from historical monthly std (1.645σ = 90% CI).
+        raw_gen_std = r.get("generation_std")
+        gen_std = float(raw_gen_std) if raw_gen_std and not _isnan(raw_gen_std) else gen_val * 0.10
+        z90 = 1.645
+        gen_lo = max(gen_val - z90 * gen_std, 0)
+        gen_hi = gen_val + z90 * gen_std
 
-        export_val = gen_val * ratio_mean
+        ratio_mean = float(r["export_ratio_mean"])
+        raw_ratio_std = r["export_ratio_std"]
+        ratio_std = float(raw_ratio_std) if raw_ratio_std and not _isnan(raw_ratio_std) and r["n"] > 1 else ratio_mean * 0.10
+
+        # Export cannot physically exceed generation (solar inverter limit).
+        # Some months have ratio > 1 due to CEB delegate visit timing or the
+        # 50/50 CEB split of merged pairs — cap to generation to keep results
+        # physically valid.
+        export_val = min(gen_val * ratio_mean, gen_val)
         export_lo  = gen_lo  * max(ratio_mean - 1.5 * ratio_std, 0)
-        export_hi  = gen_hi  * (ratio_mean + 1.5 * ratio_std)
+        export_hi  = min(gen_hi  * (ratio_mean + 1.5 * ratio_std), gen_hi)
 
-        import_val = r["import_mean"]
+        import_val = float(r["import_mean"])
 
         cred_val = max(export_val - import_val, 0)
         cred_lo  = max(export_lo  - import_val, 0)

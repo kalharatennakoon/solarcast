@@ -52,6 +52,12 @@
   gap: 12px;
 }
 
+.last-trained {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
 .train-btn {
   padding: 8px 20px;
   background: var(--color-primary);
@@ -102,6 +108,16 @@
   flex-wrap: wrap;
 }
 
+.state-message {
+  padding: 32px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
 .cards-hint {
   font-size: 0.78rem;
   color: var(--color-text-muted);
@@ -140,4 +156,9 @@
 .badge-ready {
   background: #d1fae5;
   color: #065f46;
+}
+
+.badge-error {
+  background: #fee2e2;
+  color: #991b1b;
 }

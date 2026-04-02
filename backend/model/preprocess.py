@@ -1,20 +1,17 @@
 """
 preprocess.py
 -------------
-Loads all yearly CSV files, applies business rules for merged months and
-exclusions, engineers features, and returns a clean DataFrame ready for
-model training.
+Loads all yearly CSV files, applies business rules for exclusions, engineers
+features, and returns a clean DataFrame ready for model training.
 
 Business rules applied:
-  - Feb 2024 (26-29 Feb, partial month) → excluded from training entirely.
-    The Feb-Mar 2024 merged pair is excluded as a whole because one half is
-    invalid. Mar 2024 generation cannot be paired with clean CEB values.
-  - All other merged month pairs → treated as one averaged record per month.
-    Generation is summed (total for the pair), then divided by 2 to get a
-    per-month average. CEB values (export, import, creditable export, cash)
-    are already the combined reading and are also divided by 2.
-  - Rows with no CEB data and no creditable export are dropped (can't train
-    the full prediction pipeline without them).
+  - Feb+Mar 2024: Both rows marked Exclude From Training = YES in the CSV.
+    Skipped entirely — Feb was a partial month (26–29 Feb) and the pair's CEB
+    values cannot be cleanly separated.
+  - All other merged pairs (Apr+May 2024, Jan+Feb 2025, Jan+Feb 2026): Each
+    month already has its own row in the CSV with the 50/50 split CEB values
+    applied at source. Both rows are included as separate training records.
+  - Rows with no creditable_export are dropped (incomplete CEB reading).
 """
 
 import calendar
@@ -78,62 +75,23 @@ def preprocess(exclude_incomplete: bool = True) -> pd.DataFrame:
     Parameters
     ----------
     exclude_incomplete : bool
-        If True (default), drop records that have no creditable_export value
-        (cannot train the full cash-prediction pipeline without it).
+        If True (default), drop records that have no creditable_export value.
 
     Returns
     -------
     pd.DataFrame with columns:
         ds, year, month, month_num, days_in_month,
         generation, export, import_kwh, creditable_export,
-        cash_received, total_cash,
-        is_merged, combined_generation,
+        cash_received, total_cash, is_merged,
         year_index, sin_month, cos_month
     """
     raw = load_raw()
-    records = []
-    processed_groups: set = set()
 
-    for _, row in raw.iterrows():
-        group = row["merge_group"]
-        excluded = row["exclude_training"]
+    # Drop rows marked excluded from training
+    df = raw[~raw["exclude_training"]].copy()
 
-        # ── Standalone month ──────────────────────────────────────────────
-        if group == "":
-            if excluded:
-                continue
-            records.append(_make_record(row, is_merged=False))
-            continue
-
-        # ── Merged group ──────────────────────────────────────────────────
-        if group in processed_groups:
-            continue
-        processed_groups.add(group)
-
-        group_rows = raw[raw["merge_group"] == group]
-
-        # If any row in the pair is marked excluded (e.g. Feb 2024 partial),
-        # discard the entire merged pair — CEB values are entangled.
-        if group_rows["exclude_training"].any():
-            continue
-
-        # Average the pair into one representative monthly record.
-        anchor = group_rows[group_rows["export"].notna()].iloc[0].copy()
-        n = len(group_rows)
-        combined_gen = group_rows["generation"].sum()
-
-        anchor["generation"] = combined_gen / n
-        anchor["export"] = anchor["export"] / n
-        anchor["import_kwh"] = anchor["import_kwh"] / n
-        anchor["creditable_export"] = anchor["creditable_export"] / n
-        anchor["cash_received"] = (
-            anchor["cash_received"] / n if pd.notna(anchor["cash_received"]) else np.nan
-        )
-        anchor["total_cash"] = (
-            anchor["total_cash"] / n if pd.notna(anchor["total_cash"]) else np.nan
-        )
-        records.append(_make_record(anchor, is_merged=True, combined_gen=combined_gen))
-
+    # Build records — each row in the CSV becomes one training record
+    records = [_make_record(row) for _, row in df.iterrows()]
     df = pd.DataFrame(records).sort_values("ds").reset_index(drop=True)
 
     if exclude_incomplete:
@@ -147,7 +105,7 @@ def preprocess(exclude_incomplete: bool = True) -> pd.DataFrame:
     return df
 
 
-def _make_record(row: pd.Series, is_merged: bool, combined_gen: float = None) -> dict:
+def _make_record(row: pd.Series) -> dict:
     return {
         "ds": row["ds"],
         "year": int(row["year"]),
@@ -160,8 +118,7 @@ def _make_record(row: pd.Series, is_merged: bool, combined_gen: float = None) ->
         "creditable_export": row["creditable_export"],
         "cash_received": row["cash_received"],
         "total_cash": row["total_cash"],
-        "is_merged": is_merged,
-        "combined_generation": combined_gen if combined_gen is not None else row["generation"],
+        "is_merged": row["merge_group"] != "",
     }
 
 

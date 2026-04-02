@@ -1,6 +1,7 @@
 import './PredictionCard.css'
 
 function formatValue(value, unit) {
+  if (value === null || value === undefined) return '—'
   if (unit === 'LKR') {
     return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
@@ -8,6 +9,8 @@ function formatValue(value, unit) {
 }
 
 export default function PredictionCard({ label, icon, unit, color, predictions }) {
+  if (!predictions || predictions.length === 0) return null
+
   const single = predictions.length === 1
   const first  = predictions[0]
 
@@ -32,7 +35,10 @@ export default function PredictionCard({ label, icon, unit, color, predictions }
             <span className="value-unit">{unit}</span>
           </div>
           <div className="card-range">
-            {formatValue(first.lower, unit)} – {formatValue(first.upper, unit)} {unit}
+            <span className="range-label">90% range</span>
+            <span className="range-bound range-lo">↓ {formatValue(first.lower, unit)}</span>
+            <span className="range-sep">–</span>
+            <span className="range-bound range-hi">↑ {formatValue(first.upper, unit)}</span>
             <span className="confidence-pct">±{confidencePct}%</span>
           </div>
         </div>
@@ -52,7 +58,8 @@ export default function PredictionCard({ label, icon, unit, color, predictions }
                   <span className="multi-unit"> {unit}</span>
                 </span>
                 <span className="multi-range">
-                  {formatValue(p.lower, unit)} – {formatValue(p.upper, unit)}
+                  <span className="range-hi-sm">↑ {formatValue(p.upper, unit)}</span>
+                  <span className="range-lo-sm">↓ {formatValue(p.lower, unit)}</span>
                 </span>
               </div>
             ))}

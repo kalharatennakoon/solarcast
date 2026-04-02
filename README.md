@@ -21,13 +21,13 @@ Historical monthly records from Feb 2024 onwards, sourced from the solar system 
 | Creditable Export (kWh) | Net export (Export − Import) |
 | Cash Received (LKR) | Actual payout at LKR 37/unit |
 
-Raw data lives in [data/](data/) as yearly CSV summaries.
+Raw data lives in [backend/data/](backend/data/) as yearly CSV summaries (not tracked in git — local only).
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| ML / Forecasting | Prophet (Meta) + scikit-learn, XGBoost |
+| ML / Forecasting | Prophet (Meta) + scikit-learn |
 | Data | pandas, numpy |
 | API | FastAPI + uvicorn |
 | Frontend | React + Recharts |
@@ -37,30 +37,64 @@ Raw data lives in [data/](data/) as yearly CSV summaries.
 
 ```
 solar-predictor/
-├── data/                   # Historical CSV data by year
-├── notebooks/              # EDA and model experiments
-├── model/                  # Preprocessing, training, prediction scripts
-│   └── saved_models/       # Serialized trained models (not tracked)
-├── api/                    # FastAPI backend
-├── frontend/               # React dashboard
-├── tests/                  # pytest + httpx tests
-├── requirements.txt
-└── PLAN.md                 # Detailed project plan
+├── backend/
+│   ├── api/                    # FastAPI app and route handlers
+│   │   └── routes/             # /history, /predict, /train endpoints
+│   ├── model/                  # ML model scripts
+│   │   ├── preprocess.py       # Data loading and cleaning
+│   │   ├── train.py            # Model training (Prophet)
+│   │   ├── predict.py          # Prediction pipeline
+│   │   ├── evaluate.py         # MAE / RMSE evaluation
+│   │   └── saved_models/       # Trained model artefacts (not tracked)
+│   ├── data/                   # Historical CSV files (not tracked)
+│   ├── notebooks/              # EDA and model experiments
+│   ├── tests/                  # pytest + httpx tests
+│   └── requirements.txt
+├── frontend/                   # React + Recharts dashboard
+├── docs/                       # Project documentation
+└── PLAN.md
 ```
 
 ## Setup
 
+### Backend
+
 ```bash
+cd backend
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-```
-
-Run the API:
-
-```bash
 uvicorn api.main:app --reload
 ```
+
+API runs at `http://localhost:8000` — visit `/docs` for the interactive API reference.
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs at `http://localhost:5173`.
+
+### Train the model
+
+With the backend running, click **Train Model** in the dashboard, or call the API directly:
+
+```bash
+curl -X POST http://localhost:8000/train
+```
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/history` | All historical records grouped by year |
+| GET | `/predict?months=1` | Predictions for next 1 / 3 / 6 / 12 months |
+| POST | `/train` | Train the Prophet model on historical data |
+| GET | `/status` | Whether the model has been trained |
 
 ## Development Phases
 
@@ -71,4 +105,4 @@ uvicorn api.main:app --reload
 5. **Frontend Dashboard** — Charts, prediction cards, confidence intervals
 6. **Testing & Refinement** — Backtesting, MAE evaluation, tuning
 
-See [PLAN.md](PLAN.md) for full details.
+See [PLAN.md](PLAN.md) and [docs/ml-model.md](docs/ml-model.md) for full details.
