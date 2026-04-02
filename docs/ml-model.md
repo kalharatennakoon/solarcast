@@ -28,9 +28,10 @@
 
 - **Feb 2024 (26–29 Feb):** System was installed at end of February. Only 4 days of data — excluded entirely.
 - **Feb–Mar 2024 merged pair:** Because Feb is excluded and the two months share one CEB reading, the entire pair is discarded. CEB values cannot be cleanly separated.
-- **All other merged pairs** (Apr–May 2024, Jan–Feb 2025, Jan–Feb 2026): Treated as **one averaged record**.
-  - Generation = sum of both months ÷ 2 (per-month average)
-  - Export, Import, Creditable Export, Cash = combined CEB reading ÷ 2
+- **All other merged pairs** (Apr–May 2024, Jan–Feb 2025, Jan–Feb 2026): Split into **two separate records**, one per month.
+  - Each month keeps its own real generation value (recorded individually by the inverter)
+  - Export, Import, Creditable Export, Cash = combined CEB reading ÷ 2 (50/50 split)
+  - This ensures every month has a training record — previously months like February had zero data, causing the model to predict 0 kWh
 - **Mar 2026:** Included for generation training (816 kWh confirmed). Cash is excluded from cash-related ratio computation (not yet received at time of training).
 - Records with no creditable export value are dropped from the full pipeline training.
 

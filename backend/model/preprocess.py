@@ -9,10 +9,13 @@ Business rules applied:
   - Feb 2024 (26-29 Feb, partial month) → excluded from training entirely.
     The Feb-Mar 2024 merged pair is excluded as a whole because one half is
     invalid. Mar 2024 generation cannot be paired with clean CEB values.
-  - All other merged month pairs → treated as one averaged record per month.
-    Generation is summed (total for the pair), then divided by 2 to get a
-    per-month average. CEB values (export, import, creditable export, cash)
-    are already the combined reading and are also divided by 2.
+  - All other merged month pairs → split into two separate records.
+    Each month keeps its own real generation value (already recorded individually).
+    CEB values (export, import, creditable export, cash) are divided equally
+    between the two months (50/50 split) since the combined reading cannot be
+    attributed to either month individually.
+    This gives each month its own training record and prevents months like
+    February from having zero training data.
   - Rows with no CEB data and no creditable export are dropped (can't train
     the full prediction pipeline without them).
 """
@@ -87,8 +90,7 @@ def preprocess(exclude_incomplete: bool = True) -> pd.DataFrame:
         ds, year, month, month_num, days_in_month,
         generation, export, import_kwh, creditable_export,
         cash_received, total_cash,
-        is_merged, combined_generation,
-        year_index, sin_month, cos_month
+        is_merged, year_index, sin_month, cos_month
     """
     raw = load_raw()
     records = []
@@ -117,22 +119,27 @@ def preprocess(exclude_incomplete: bool = True) -> pd.DataFrame:
         if group_rows["exclude_training"].any():
             continue
 
-        # Average the pair into one representative monthly record.
-        anchor = group_rows[group_rows["export"].notna()].iloc[0].copy()
+        # Split the merged pair into two separate records.
+        # Each month keeps its own generation.
+        # CEB values (export, import, creditable export, cash) are divided
+        # equally (50/50) between the two months.
+        anchor = group_rows[group_rows["export"].notna()].iloc[0]
         n = len(group_rows)
-        combined_gen = group_rows["generation"].sum()
 
-        anchor["generation"] = combined_gen / n
-        anchor["export"] = anchor["export"] / n
-        anchor["import_kwh"] = anchor["import_kwh"] / n
-        anchor["creditable_export"] = anchor["creditable_export"] / n
-        anchor["cash_received"] = (
-            anchor["cash_received"] / n if pd.notna(anchor["cash_received"]) else np.nan
-        )
-        anchor["total_cash"] = (
-            anchor["total_cash"] / n if pd.notna(anchor["total_cash"]) else np.nan
-        )
-        records.append(_make_record(anchor, is_merged=True, combined_gen=combined_gen))
+        for _, month_row in group_rows.iterrows():
+            split_row = month_row.copy()
+            split_row["export"]           = anchor["export"] / n
+            split_row["import_kwh"]       = anchor["import_kwh"] / n
+            split_row["creditable_export"] = anchor["creditable_export"] / n
+            split_row["cash_received"] = (
+                anchor["cash_received"] / n
+                if pd.notna(anchor["cash_received"]) else np.nan
+            )
+            split_row["total_cash"] = (
+                anchor["total_cash"] / n
+                if pd.notna(anchor["total_cash"]) else np.nan
+            )
+            records.append(_make_record(split_row, is_merged=True))
 
     df = pd.DataFrame(records).sort_values("ds").reset_index(drop=True)
 
@@ -147,7 +154,7 @@ def preprocess(exclude_incomplete: bool = True) -> pd.DataFrame:
     return df
 
 
-def _make_record(row: pd.Series, is_merged: bool, combined_gen: float = None) -> dict:
+def _make_record(row: pd.Series, is_merged: bool) -> dict:
     return {
         "ds": row["ds"],
         "year": int(row["year"]),
@@ -161,7 +168,6 @@ def _make_record(row: pd.Series, is_merged: bool, combined_gen: float = None) ->
         "cash_received": row["cash_received"],
         "total_cash": row["total_cash"],
         "is_merged": is_merged,
-        "combined_generation": combined_gen if combined_gen is not None else row["generation"],
     }
 
 
