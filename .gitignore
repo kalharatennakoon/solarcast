@@ -9,8 +9,6 @@ build/
 venv/
 .venv/
 env/
-backend/venv/
-backend/.venv/
 
 # Environment
 .env
