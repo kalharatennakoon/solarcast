@@ -30,6 +30,9 @@ frontend/dist/
 frontend/.env
 frontend/.env.local
 
+# Local-only docs
+docs/local-network-access.md
+
 # macOS
 .DS_Store
 **/.DS_Store
