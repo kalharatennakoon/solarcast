@@ -9,6 +9,8 @@ build/
 venv/
 .venv/
 env/
+backend/venv/
+backend/.venv/
 
 # Environment
 .env
@@ -19,12 +21,12 @@ env/
 *.ipynb_checkpoints
 
 # ML models (keep local only)
-model/saved_models/
+backend/model/saved_models/
 
 # Data (keep local only)
-data/
+backend/data/
 
-# Frontend
+# Frontend / root npm
 node_modules/
 frontend/dist/
 frontend/.env

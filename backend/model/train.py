@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 from prophet import Prophet
 
-from preprocess import preprocess, train_test_split
+from model.preprocess import preprocess, train_test_split
 
 MODELS_DIR = Path(__file__).parent / "saved_models"
 MODELS_DIR.mkdir(exist_ok=True)

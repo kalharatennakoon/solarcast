@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PredictionCard from './PredictionCard'
 import HistoryChart from './HistoryChart'
 import HistoryTable from './HistoryTable'
+import { fetchHistory, fetchPredictions, fetchStatus, trainModel } from '../api'
 import './Dashboard.css'
 
 // ── Historical data ───────────────────────────────────────────────────────────
@@ -120,20 +121,82 @@ const PERIOD_OPTIONS = [
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [period, setPeriod]           = useState(1)
-  const [modelStatus, setModelStatus] = useState('untrained') // untrained | training | ready
+  const [modelStatus, setModelStatus] = useState('untrained') // untrained | training | ready | error
+  const [predictions, setPredictions] = useState(MOCK_PREDICTIONS.slice(0, 1))
+  const [historyByYear, setHistoryByYear] = useState(HISTORY_BY_YEAR)
+  const [chartData, setChartData]     = useState(CHART_DATA)
+  const [backendUp, setBackendUp]     = useState(false)
 
-  const predictions = MOCK_PREDICTIONS.slice(0, period)
+  // Check model status and load history on mount
+  useEffect(() => {
+    fetchStatus()
+      .then(({ modelTrained }) => {
+        setBackendUp(true)
+        setModelStatus(modelTrained ? 'ready' : 'untrained')
+      })
+      .catch(() => setBackendUp(false))
 
-  function handleTrain() {
+    fetchHistory()
+      .then(({ years }) => {
+        const byYear = years.map(({ year, rows }) => ({
+          year,
+          rows: rows.map(r => ({
+            period: r.period,
+            month: r.month,
+            generation: r.generation,
+            export: r.export,
+            import: r.importKwh,
+            creditableExport: r.creditableExport,
+            totalCash: r.totalCash,
+            cash: r.cashReceived,
+            mergeGroup: r.mergeGroup,
+            excludeTraining: r.excludeTraining,
+            note: r.note,
+          })),
+        }))
+        setHistoryByYear(byYear)
+
+        const chart = byYear
+          .flatMap(y => y.rows)
+          .filter(r => r.generation !== null)
+        setChartData(chart)
+      })
+      .catch(() => { /* backend not running — keep mock data */ })
+  }, [])
+
+  // Re-fetch predictions when period or model status changes
+  useEffect(() => {
+    if (!backendUp || modelStatus !== 'ready') {
+      setPredictions(MOCK_PREDICTIONS.slice(0, period))
+      return
+    }
+    fetchPredictions(period)
+      .then(({ predictions: preds }) => {
+        setPredictions(preds.map(p => ({
+          month: p.month,
+          generation:      { v: p.generation.value,       lo: p.generation.lower,       hi: p.generation.upper },
+          creditableExport:{ v: p.creditableExport.value, lo: p.creditableExport.lower, hi: p.creditableExport.upper },
+          cash:            { v: p.cash.value,             lo: p.cash.lower,             hi: p.cash.upper },
+        })))
+      })
+      .catch(() => setPredictions(MOCK_PREDICTIONS.slice(0, period)))
+  }, [period, modelStatus, backendUp])
+
+  async function handleTrain() {
     setModelStatus('training')
-    // TODO: call POST /train API
-    setTimeout(() => setModelStatus('ready'), 2000)
+    try {
+      await trainModel()
+      setModelStatus('ready')
+    } catch {
+      setModelStatus('error')
+    }
   }
 
   const statusBadge = {
     untrained: <span className="badge badge-pending">Model not trained</span>,
     training:  <span className="badge badge-training">Training…</span>,
     ready:     <span className="badge badge-ready">Model ready</span>,
+    error:     <span className="badge badge-error">Backend not running</span>,
   }[modelStatus]
 
   return (
@@ -161,6 +224,7 @@ export default function Dashboard() {
             disabled={modelStatus === 'training'}
           >
             {modelStatus === 'training' ? 'Training…' : 'Train Model'}
+
           </button>
         </div>
       </div>
@@ -229,7 +293,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="chart-card">
-          <HistoryChart data={CHART_DATA} />
+          <HistoryChart data={chartData} />
         </div>
       </section>
 
@@ -241,7 +305,7 @@ export default function Dashboard() {
             <p className="section-subtitle">Raw records by year — expand to view</p>
           </div>
         </div>
-        {HISTORY_BY_YEAR.map(({ year, rows }) => (
+        {historyByYear.map(({ year, rows }) => (
           <HistoryTable key={year} year={year} rows={rows} />
         ))}
       </section>
