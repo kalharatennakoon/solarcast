@@ -4,10 +4,10 @@ import HistoryChart from './HistoryChart'
 import HistoryTable from './HistoryTable'
 import './Dashboard.css'
 
-// ── Actual historical data ────────────────────────────────────────────────────
-// Will be replaced by GET /history API call once backend is ready.
-// Missing cells (Mar/May 2024, Feb 2025, Feb 2026) will be filled when the user
-// provides the data.
+// ── Historical data ───────────────────────────────────────────────────────────
+// Hardcoded here for UI development. Will be fetched from GET /history once the
+// FastAPI backend is ready. Months with null CEB values (Mar/May 2024, Feb 2025,
+// Feb 2026) are missing delegate readings — to be updated when data is available.
 const HISTORY_2024 = [
   { period: 'Feb 2024', month: 'February',
     generation: 155,  export: 792,  import: 69,  creditableExport: 723,  totalCash: 26751.00, cash: 25414.40,
