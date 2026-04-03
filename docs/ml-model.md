@@ -34,35 +34,6 @@
 - **Mar 2026:** Included with generation=816 kWh confirmed. Cash is excluded from cash-related ratio computation (not yet received at time of training).
 - Records with no creditable export value are dropped from the full pipeline training.
 
-### Clean training records (after preprocessing)
-
-| # | Record | Generation (kWh) | Creditable Export (kWh) | Type |
-|---|---|---|---|---|
-| 1 | Apr 2024 | 717 | 561 | Merged (50/50 split) |
-| 2 | May 2024 | 560 | 561 | Merged (50/50 split) |
-| 3 | Jun 2024 | 580 | 438 | Standalone |
-| 4 | Jul 2024 | 595 | 506 | Standalone |
-| 5 | Aug 2024 | 590 | 531 | Standalone |
-| 6 | Sep 2024 | 600 | 441 | Standalone |
-| 7 | Oct 2024 | 593 | 489 | Standalone |
-| 8 | Nov 2024 | 475 | 475 | Standalone |
-| 9 | Dec 2024 | 518 | 298 | Standalone |
-| 10 | Jan 2025 | 446 | 504 | Merged (50/50 split) |
-| 11 | Feb 2025 | 670 | 504 | Merged (50/50 split) |
-| 12 | Mar 2025 | 690 | 552 | Standalone |
-| 13 | Apr 2025 | 675 | 598 | Standalone |
-| 14 | May 2025 | 612 | 495 | Standalone |
-| 15 | Jun 2025 | 608 | 458 | Standalone |
-| 16 | Jul 2025 | 622 | 509 | **← last training record** |
-| 17 | Aug 2025 | 634 | 569 | **← test set starts** |
-| 18 | Sep 2025 | 568 | 471 | Test |
-| 19 | Oct 2025 | 567 | 319 | Test |
-| 20 | Nov 2025 | 437 | 381 | Test |
-| 21 | Dec 2025 | 506 | 342 | Test |
-| 22 | Jan 2026 | 512 | 416.5 | Merged (50/50 split) / Test |
-| 23 | Feb 2026 | 518 | 416.5 | Merged (50/50 split) / Test |
-| 24 | Mar 2026 | 816 | 543 | Test |
-
 **Total: 24 records — 16 training (70%) / 8 test (30%)**
 
 > The split is **chronological** — training always precedes test. Shuffling time-series data would cause data leakage.
