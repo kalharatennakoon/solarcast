@@ -9,7 +9,7 @@ export default function App() {
           <div className="header-title">
             <span className="header-icon">☀️</span>
             <div>
-              <h1>Solar Predictor</h1>
+              <h1>SolarCast</h1>
               <p>Track and predict your solar energy performance</p>
             </div>
           </div>

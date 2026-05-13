@@ -1,4 +1,4 @@
-# Solar Predictor
+# SolarCast
 
 A machine learning tool that predicts monthly solar energy generation and expected cash received, based on historical data from a residential solar system in Sri Lanka.
 
@@ -38,7 +38,7 @@ Monthly records from April 2024 onwards (Feb–Mar 2024 excluded — partial ins
 ## Project Structure
 
 ```
-solar-predictor/
+solarcast/
 ├── backend/
 │   ├── api/                    # FastAPI app and route handlers
 │   │   └── routes/             # /history, /predict, /train, /status

@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes import history, predict, train
 
 app = FastAPI(
-    title="Solar Predictor API",
+    title="SolarCast API",
     version="1.0.0",
     description="Predicts monthly solar generation and expected cash received.",
 )
@@ -29,4 +29,4 @@ app.include_router(train.router,   tags=["Training"])
 
 @app.get("/")
 def root():
-    return {"message": "Solar Predictor API is running. Visit /docs for the API reference."}
+    return {"message": "SolarCast API is running. Visit /docs for the API reference."}
