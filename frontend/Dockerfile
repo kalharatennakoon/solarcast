@@ -23,10 +23,12 @@ ENV BACKEND_URL=http://backend:8000
 
 # The image's entrypoint fills ${BACKEND_URL} into this template at start-up.
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
-# nginx runs as a non-root user, so the template must be world-readable
-# whatever permissions the file had on the machine that built it.
+# As root: apply OS security updates released since the base image was built,
+# and make the template world-readable whatever permissions the file had on
+# the machine that built it. Then drop back to the unprivileged nginx user.
 USER root
-RUN chmod -R a+rX /etc/nginx/templates
+RUN apk upgrade --no-cache \
+ && chmod -R a+rX /etc/nginx/templates
 USER nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
