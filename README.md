@@ -14,7 +14,7 @@ A machine learning tool that predicts monthly solar energy generation and expect
 
 ## Data
 
-Monthly records from April 2024 onwards (Feb–Mar 2024 excluded — partial install month). Raw data lives in [backend/data/](backend/data/) as yearly CSV summaries.
+Monthly records from April 2024 onwards. Two periods are excluded from training: Feb–Mar 2024 (partial install month) and Jun 2026 (incomplete inverter reading). Raw data lives in [backend/data/](backend/data/) as yearly CSV summaries.
 
 | Field | Description |
 |---|---|
@@ -213,10 +213,14 @@ these are set under **Settings → Secrets and variables → Actions**:
 ## Model Summary
 
 - **Algorithm:** Prophet with `yearly_seasonality=3` (Fourier order 3) and `growth='flat'`
-- **Training data:** 16 records — Apr 2024 → Jul 2025 (70%)
-- **Test data:** 8 records — Aug 2025 → Mar 2026 (30%)
-- **Test MAPE:** ~9.5% (MAE ~53 kWh per month)
+- **Split:** chronological 70/30 — the model is only tested on months later than the ones it learned from
+- **Training data:** 20 records — Apr 2024 → Nov 2025
+- **Test data:** 9 records — Dec 2025 → Sep 2026
+- **Test error:** MAPE ~8.0% (MAE ~47 kWh per month), against ~9.5% for a "same month last year" baseline
 - **Confidence intervals:** 90% CI computed from historical monthly generation std; export/cash CI additionally incorporates ratio variability
+
+These figures are for data up to September 2026 and move as each month is
+added; run `python -m model.evaluate` from `backend/` for the current values.
 
 See [docs/ml-model.md](docs/ml-model.md) for full model documentation, and
 [docs/roadmap.md](docs/roadmap.md) for where the project is heading.
