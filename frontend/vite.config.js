@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  // GitHub Pages serves the demo from /<repo-name>/, so the build needs to
+  // know that prefix. Everywhere else the app lives at the root.
+  base: process.env.VITE_BASE_PATH || '/',
   server: {
     proxy: {
       '/api': {

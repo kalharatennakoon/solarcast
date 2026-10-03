@@ -4,6 +4,22 @@
   gap: 36px;
 }
 
+/* ── Demo notice ── */
+.demo-banner {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #78350f;
+}
+
+.demo-banner a {
+  color: #92400e;
+  font-weight: 600;
+}
+
 /* ── Controls bar ── */
 .controls-bar {
   display: flex;
@@ -49,6 +65,7 @@
 .train-area {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;   /* keeps the Train button on screen on phones */
   gap: 12px;
 }
 

@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import PredictionCard from './PredictionCard'
 import HistoryChart from './HistoryChart'
 import HistoryTable from './HistoryTable'
-import { fetchHistory, fetchPredictions, fetchStatus, trainModel } from '../api'
+import { DEMO_MODE, fetchHistory, fetchPredictions, fetchStatus, trainModel } from '../api'
 import './Dashboard.css'
+
+const REPO_URL = 'https://github.com/kalharatennakoon/solarcast'
 
 
 function formatTrainedAt(timestamp) {
@@ -110,6 +112,16 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
 
+      {/* ── Demo notice (public demo site only) ── */}
+      {DEMO_MODE && (
+        <div className="demo-banner" role="note">
+          <strong>Demo with synthetic data.</strong>{' '}
+          These figures are generated, not readings from a real solar system,
+          and model training is switched off here.{' '}
+          <a href={REPO_URL} target="_blank" rel="noreferrer">See the project on GitHub</a>.
+        </div>
+      )}
+
       {/* ── Controls bar ── */}
       <div className="controls-bar">
         <div className="period-selector">
@@ -134,7 +146,8 @@ export default function Dashboard() {
           <button
             className="train-btn"
             onClick={handleTrain}
-            disabled={modelStatus === 'training' || !backendUp}
+            disabled={DEMO_MODE || modelStatus === 'training' || !backendUp}
+            title={DEMO_MODE ? 'Training is switched off in the demo' : undefined}
           >
             {modelStatus === 'training' ? 'Training…' : 'Train Model'}
           </button>
