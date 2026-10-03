@@ -24,6 +24,10 @@ ENV PATH="/opt/venv/bin:$PATH" \
     SOLARCAST_DATA_DIR=/data \
     SOLARCAST_MODELS_DIR=/models
 
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends libpcre2-8-0 \
+ && rm -rf /var/lib/apt/lists/*
+
 # Run as an unprivileged user. /data is mounted read-only at run time;
 # /models is the only place the application writes to.
 RUN groupadd --gid 10001 solarcast \
