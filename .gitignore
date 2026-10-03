@@ -33,6 +33,8 @@ backend/data/
 # Frontend / root npm
 node_modules/
 frontend/dist/
+# Demo data generated at build time for the GitHub Pages site
+frontend/public/demo/
 frontend/.env
 frontend/.env.local
 

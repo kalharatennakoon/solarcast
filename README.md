@@ -2,6 +2,8 @@
 
 A machine learning tool that predicts monthly solar energy generation and expected cash received, based on historical data from a residential solar system in Sri Lanka.
 
+**Live demo:** https://kalharatennakoon.github.io/solarcast/ — a static preview on synthetic data.
+
 ## What it does
 
 - Forecasts monthly solar generation (kWh) using Prophet (Meta) time-series ML with yearly seasonality
@@ -55,7 +57,8 @@ solarcast/
 │   │   ├── artefacts.py        # Reads and writes trained artefacts (atomic writes)
 │   │   └── saved_models/       # Trained model artefacts (not tracked in git)
 │   ├── data/                   # Historical CSV files (not tracked in git)
-│   ├── sample_data/            # Synthetic CSVs for tests, CI and demos
+│   ├── sample_data/            # Synthetic CSVs for tests and CI
+│   ├── scripts/                # Sample data generator, demo data export
 │   ├── tests/                  # pytest suite (runs on sample_data only)
 │   ├── settings.py             # Configuration from environment variables
 │   ├── Dockerfile
@@ -68,7 +71,7 @@ solarcast/
 ├── scripts/smoke-test.sh       # End-to-end check of the running containers
 ├── docker-compose.yml
 ├── Makefile
-├── .github/workflows/ci.yml
+├── .github/workflows/          # ci.yml (test, build, publish), pages.yml (demo site)
 └── docs/
     ├── ml-model.md             # Full ML model documentation
     └── roadmap.md              # MLOps platform roadmap
@@ -140,7 +143,7 @@ python -m model.evaluate
 
 ```bash
 cd backend
-pytest              # 35 tests, on synthetic data only
+pytest              # runs on synthetic data only
 ruff check .
 ```
 
@@ -171,6 +174,27 @@ as the data folder (default `./backend/data`).
 | GET | `/healthz` | Liveness check |
 | GET | `/readyz` | Readiness check (data folder available, model state) |
 | GET | `/metrics` | Prometheus metrics |
+
+## Demo site
+
+The [live demo](https://kalharatennakoon.github.io/solarcast/) is the same
+dashboard built in demo mode and hosted on GitHub Pages. Pages serves static
+files only, so there is no backend behind it:
+[the demo workflow](.github/workflows/pages.yml) runs the real pipeline at
+build time and saves the answers as JSON files the dashboard reads instead.
+
+- It uses synthetic data only. The export script generates its own readings
+  and ignores `SOLARCAST_DATA_DIR`, so private data cannot reach the site.
+- Training is switched off, and a banner says it is a demo.
+- It is rebuilt on every change and on the 1st of each month, so the history
+  always runs up to last month.
+
+To preview it locally:
+
+```bash
+cd backend && python -m scripts.export_demo_data ../frontend/public/demo
+cd ../frontend && VITE_DEMO_MODE=true npm run dev
+```
 
 ## Continuous integration
 

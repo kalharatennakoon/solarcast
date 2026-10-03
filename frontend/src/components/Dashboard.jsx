@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import PredictionCard from './PredictionCard'
 import HistoryChart from './HistoryChart'
 import HistoryTable from './HistoryTable'
-import { fetchHistory, fetchPredictions, fetchStatus, trainModel } from '../api'
+import { DEMO_MODE, fetchHistory, fetchPredictions, fetchStatus, trainModel } from '../api'
 import './Dashboard.css'
 
 
@@ -110,6 +110,14 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
 
+      {/* ── Demo notice (public demo site only) ── */}
+      {DEMO_MODE && (
+        <div className="demo-banner" role="note">
+          <strong>Demo with synthetic data.</strong>{' '}
+          These figures are generated, not readings from a real solar system.
+        </div>
+      )}
+
       {/* ── Controls bar ── */}
       <div className="controls-bar">
         <div className="period-selector">
@@ -131,13 +139,16 @@ export default function Dashboard() {
               Last trained: {formatTrainedAt(lastTrainedAt)}
             </span>
           )}
-          <button
-            className="train-btn"
-            onClick={handleTrain}
-            disabled={modelStatus === 'training' || !backendUp}
-          >
-            {modelStatus === 'training' ? 'Training…' : 'Train Model'}
-          </button>
+          {/* The demo site has no backend to train on, so there is no button. */}
+          {!DEMO_MODE && (
+            <button
+              className="train-btn"
+              onClick={handleTrain}
+              disabled={modelStatus === 'training' || !backendUp}
+            >
+              {modelStatus === 'training' ? 'Training…' : 'Train Model'}
+            </button>
+          )}
         </div>
       </div>
 

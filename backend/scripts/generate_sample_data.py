@@ -8,6 +8,10 @@ anyone cloning the repo can run SolarCast without the private inverter data.
 The numbers come from a sine-wave season plus random noise with a fixed seed.
 They are not derived from any real solar system.
 
+The committed files cover 2023–2025 and never change. The public demo site
+uses the same generator with a later end month (see export_demo_data.py), so
+its history always runs up to last month.
+
 Usage (from backend/):
     python scripts/generate_sample_data.py
 """
@@ -20,7 +24,8 @@ from pathlib import Path
 import numpy as np
 
 OUT_DIR = Path(__file__).resolve().parent.parent / "sample_data"
-YEARS = (2023, 2024, 2025)
+START_YEAR = 2023
+DEFAULT_END = (2025, 12)   # (year, month) of the last row in the committed files
 RATE_PER_UNIT = 37
 
 HEADER = [
@@ -45,9 +50,21 @@ def _month_row(rng: np.random.Generator, year: int, month: int) -> dict:
     }
 
 
-def build_rows() -> list[dict]:
+def build_rows(end: tuple[int, int] = DEFAULT_END) -> list[dict]:
+    """
+    One row per month from January 2023 to `end` (year, month), inclusive.
+
+    The random generator is seeded and months are drawn in order, so extending
+    `end` only appends rows; every earlier month keeps exactly the same values.
+    """
+    end_year, end_month = end
     rng = np.random.default_rng(42)
-    rows = [_month_row(rng, y, m) for y in YEARS for m in range(1, 13)]
+    rows = [
+        _month_row(rng, y, m)
+        for y in range(START_YEAR, end_year + 1)
+        for m in range(1, 13)
+        if (y, m) <= (end_year, end_month)
+    ]
     by_key = {(r["year"], r["month"]): r for r in rows}
 
     # A partial first month, excluded from training.
@@ -63,15 +80,16 @@ def build_rows() -> list[dict]:
         r.update(merge="Jan-Feb", exclude="NO", notes="One reading for both months; split equally")
 
     # The latest month's payment has not arrived yet.
-    by_key[(2025, "December")].update(received="", notes="Cash not yet received")
+    rows[-1].update(received="", notes="Cash not yet received")
     return rows
 
 
-def main() -> None:
-    OUT_DIR.mkdir(exist_ok=True)
-    rows = build_rows()
-    for year in YEARS:
-        path = OUT_DIR / f"{year}-summary.csv"
+def write_csv_files(rows: list[dict], out_dir: Path) -> list[Path]:
+    """Write one <year>-summary.csv per year and return the paths."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for year in sorted({r["year"] for r in rows}):
+        path = out_dir / f"{year}-summary.csv"
         with open(path, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(HEADER)
@@ -82,6 +100,12 @@ def main() -> None:
                     f"{r['import']:g}", f"{r['creditable']:g}", *money,
                     r["merge"], r["exclude"], r["notes"],
                 ])
+        paths.append(path)
+    return paths
+
+
+def main() -> None:
+    for path in write_csv_files(build_rows(), OUT_DIR):
         print(f"Wrote {path}")
 
 
