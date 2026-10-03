@@ -4,7 +4,7 @@
 
 - The goal is to predict **next month's solar generation (kWh)** and derive from it the **expected creditable export** and **cash received (LKR)**.
 - Generation is the only value predicted directly by the ML model. All other values are **derived** from it using historical seasonal ratios.
-- The model is trained on 24 clean monthly records spanning April 2024 → March 2026.
+- The model is built on 29 clean monthly records spanning April 2024 → September 2026 (figures in this document are as of that month).
 
 ---
 
@@ -31,10 +31,11 @@
 - **All other merged pairs** (Apr–May 2024, Jan–Feb 2025, Jan–Feb 2026): Each month appears as its own row in the CSV with the 50/50 CEB split already applied at source. Both rows are included as **separate training records**.
   - Each month keeps its own real generation value (recorded individually by the inverter)
   - Export, Import, Creditable Export, Cash = combined CEB reading ÷ 2 (50/50 split, pre-applied in CSV)
-- **Mar 2026:** Included with generation=816 kWh confirmed. Cash is excluded from cash-related ratio computation (not yet received at time of training).
+- **Jun 2026:** The inverter lost its Wi-Fi connection, so the recorded generation is incomplete. The row is marked Exclude From Training = YES and skipped entirely.
+- **Latest month:** Included even though its cash has not been received yet. The blank Cash Received value does not affect training, because cash is derived from generation rather than learned.
 - Records with no creditable export value are dropped from the full pipeline training.
 
-**Total: 24 records — 16 training (70%) / 8 test (30%)**
+**Total: 29 records — 20 training (70%) / 9 test (30%)**
 
 > The split is **chronological** — training always precedes test. Shuffling time-series data would cause data leakage.
 
@@ -54,11 +55,11 @@
 ```
 ds          y
 ----------  ------
-2024-04-01  638.5      ← averaged Apr–May merged pair
-2024-06-01  580
-2024-07-01  595
+2024-04-01  <kWh>      ← first training record
+2024-05-01  <kWh>
+2024-06-01  <kWh>
 ...
-2025-08-01  634        ← last training record
+2025-11-01  <kWh>      ← last training record
 ```
 
 ### Key Prophet settings
@@ -197,8 +198,8 @@ python -m model.predict 3   # prints predictions for next 3 months
 
 ## Known Limitations
 
-- **Small dataset (24 records, 16 training).** Prophet handles small datasets reasonably well due to its Bayesian priors, but predictions beyond 3–6 months carry increasing uncertainty. Most calendar months have only 1–2 training samples, so seasonality estimates are rough.
-- **Merged month averaging** introduces a small approximation. The averaged record is placed at the first month of the pair, which may slightly shift the learned seasonal curve.
+- **Small dataset (29 records, 20 training).** Prophet handles small datasets reasonably well due to its Bayesian priors, but predictions beyond 3–6 months carry increasing uncertainty. Most calendar months have only 1–2 training samples, so seasonality estimates are rough.
+- **Merged months use a 50/50 split.** When one CEB reading covers two months, export, import and cash are divided equally between them, which is an approximation.
 - **Import is not predicted — it is averaged.** If your grid consumption changes significantly (e.g. new appliances, EV charging), the model will underestimate or overestimate creditable export.
 - **The LKR 37/unit rate is a fixed setting.** If the CEB rate changes, set the `SOLARCAST_RATE_PER_UNIT` environment variable.
 - **Cash received ≠ Total cash.** The model predicts Total Cash (creditable export × 37). The actual cash received after service fees and taxes will be slightly lower. The model does not currently predict the deduction amount.
