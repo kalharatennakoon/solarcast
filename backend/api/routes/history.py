@@ -1,9 +1,10 @@
 import calendar
 import math
+
 from fastapi import APIRouter, HTTPException
 
+from api.schemas import HistoryResponse, HistoryRow, YearGroup
 from model.preprocess import load_raw
-from api.schemas import HistoryResponse, YearGroup, HistoryRow
 
 router = APIRouter()
 
@@ -29,8 +30,8 @@ def get_history():
     """
     try:
         raw = load_raw()
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except (FileNotFoundError, ValueError) as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     year_map: dict[int, list[HistoryRow]] = {}
 

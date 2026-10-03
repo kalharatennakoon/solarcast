@@ -38,13 +38,13 @@ Confidence propagation
   cash_hi             = creditable_hi × 37
 """
 
-import json
 import math
 from datetime import date
-from pathlib import Path
 
-import joblib
 import pandas as pd
+
+from model.artefacts import load_artefacts
+from settings import get_settings
 
 
 def _isnan(v):
@@ -53,18 +53,12 @@ def _isnan(v):
     except (TypeError, ValueError):
         return False
 
-MODELS_DIR = Path(__file__).parent / "saved_models"
-RATE_PER_UNIT = 37  # LKR per kWh
 
-
-def load_artefacts():
-    model = joblib.load(MODELS_DIR / "prophet_generation.pkl")
-    with open(MODELS_DIR / "seasonal_ratios.json") as f:
-        ratios = {int(k): v for k, v in json.load(f).items()}
-    return model, ratios
-
-
-def predict(months: int = 1, start_date: date = None) -> list[dict]:
+def predict(
+    months: int = 1,
+    start_date: date | None = None,
+    artefacts: tuple | None = None,
+) -> list[dict]:
     """
     Predict solar generation and derived metrics for the next `months` months.
 
@@ -76,6 +70,9 @@ def predict(months: int = 1, start_date: date = None) -> list[dict]:
         First month to predict. Defaults to the first day of the current month
         — the current month is always predictive since final values (CEB
         delegate reading, cash received) are not known until the month ends.
+    artefacts : (model, ratios), optional
+        Already-loaded artefacts. The API passes its cached copy so the model
+        is not re-read from disk on every request; the CLI leaves this unset.
 
     Returns
     -------
@@ -87,7 +84,11 @@ def predict(months: int = 1, start_date: date = None) -> list[dict]:
             "cash"              : {"value": 20535.00, "lower": 18315.00, "upper": 22755.00},
         }
     """
-    model, ratios = load_artefacts()
+    if months < 1:
+        raise ValueError("months must be at least 1")
+
+    model, ratios = artefacts if artefacts is not None else load_artefacts()
+    rate_per_unit = get_settings().rate_per_unit  # LKR per kWh
 
     if start_date is None:
         today = date.today()
@@ -135,9 +136,9 @@ def predict(months: int = 1, start_date: date = None) -> list[dict]:
         cred_lo  = max(export_lo  - import_val, 0)
         cred_hi  = max(export_hi  - import_val, 0)
 
-        cash_val = round(cred_val * RATE_PER_UNIT, 2)
-        cash_lo  = round(cred_lo  * RATE_PER_UNIT, 2)
-        cash_hi  = round(cred_hi  * RATE_PER_UNIT, 2)
+        cash_val = round(cred_val * rate_per_unit, 2)
+        cash_lo  = round(cred_lo  * rate_per_unit, 2)
+        cash_hi  = round(cred_hi  * rate_per_unit, 2)
 
         results.append({
             "month": label,

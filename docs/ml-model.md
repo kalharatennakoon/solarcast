@@ -174,7 +174,7 @@ cash_upper = creditable_export_upper × 37
 
 ## Evaluation Metrics
 
-Run `python model/evaluate.py` after training to see:
+Run `python -m model.evaluate` from `backend/` after training to see:
 
 | Metric | Description |
 |---|---|
@@ -187,10 +187,10 @@ Run `python model/evaluate.py` after training to see:
 ## How to Retrain
 
 ```bash
-cd model
-python train.py       # trains and saves model artefacts to saved_models/
-python evaluate.py    # evaluates on the test set
-python predict.py 3   # prints predictions for next 3 months
+cd backend
+python -m model.train       # trains and saves model artefacts to saved_models/
+python -m model.evaluate    # evaluates on the test set
+python -m model.predict 3   # prints predictions for next 3 months
 ```
 
 ---
@@ -200,7 +200,7 @@ python predict.py 3   # prints predictions for next 3 months
 - **Small dataset (24 records, 16 training).** Prophet handles small datasets reasonably well due to its Bayesian priors, but predictions beyond 3–6 months carry increasing uncertainty. Most calendar months have only 1–2 training samples, so seasonality estimates are rough.
 - **Merged month averaging** introduces a small approximation. The averaged record is placed at the first month of the pair, which may slightly shift the learned seasonal curve.
 - **Import is not predicted — it is averaged.** If your grid consumption changes significantly (e.g. new appliances, EV charging), the model will underestimate or overestimate creditable export.
-- **The LKR 37/unit rate is hardcoded.** If the CEB rate changes, `RATE_PER_UNIT` in `predict.py` must be updated.
+- **The LKR 37/unit rate is a fixed setting.** If the CEB rate changes, set the `SOLARCAST_RATE_PER_UNIT` environment variable.
 - **Cash received ≠ Total cash.** The model predicts Total Cash (creditable export × 37). The actual cash received after service fees and taxes will be slightly lower. The model does not currently predict the deduction amount.
 - **No weather data.** Adding weather features (sunshine hours, cloud cover) would improve accuracy significantly once more data accumulates.
 

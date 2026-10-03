@@ -12,16 +12,12 @@ Metrics reported
 
 Usage
 -----
-  python evaluate.py
+  python -m model.evaluate      (run from backend/)
 """
 
-from pathlib import Path
-
-import joblib
 import numpy as np
-import pandas as pd
 
-MODELS_DIR = Path(__file__).parent / "saved_models"
+from model.artefacts import load_artefacts, load_test_set
 
 
 def mae(actual, predicted):
@@ -37,18 +33,30 @@ def mape(actual, predicted):
     return np.mean(np.abs((actual[mask] - predicted[mask]) / actual[mask])) * 100
 
 
-def evaluate():
-    model = joblib.load(MODELS_DIR / "prophet_generation.pkl")
-    test_df = pd.read_csv(MODELS_DIR / "test_set.csv", parse_dates=["ds"])
+def evaluate() -> dict | None:
+    """
+    Print the evaluation report and return the headline metrics as
+    {"mae": ..., "rmse": ..., "mape": ..., "records": ...}, or None if
+    there is no test set yet.
+    """
+    model, _ = load_artefacts()
+    test_df = load_test_set()
 
     if test_df.empty:
         print("Test set is empty — run train.py first.")
-        return
+        return None
 
     forecast = model.predict(test_df[["ds"]])
 
     actual    = test_df["generation"].values
     predicted = forecast["yhat"].clip(lower=0).values
+
+    metrics = {
+        "mae": float(mae(actual, predicted)),
+        "rmse": float(rmse(actual, predicted)),
+        "mape": float(mape(actual, predicted)),
+        "records": len(test_df),
+    }
 
     print("─" * 50)
     print("  Model Evaluation — Generation (kWh)")
@@ -56,9 +64,9 @@ def evaluate():
     print(f"  Test period : {test_df['ds'].min().strftime('%b %Y')} → {test_df['ds'].max().strftime('%b %Y')}")
     print(f"  Records     : {len(test_df)}")
     print("─" * 50)
-    print(f"  MAE         : {mae(actual, predicted):.1f} kWh")
-    print(f"  RMSE        : {rmse(actual, predicted):.1f} kWh")
-    print(f"  MAPE        : {mape(actual, predicted):.1f} %")
+    print(f"  MAE         : {metrics['mae']:.1f} kWh")
+    print(f"  RMSE        : {metrics['rmse']:.1f} kWh")
+    print(f"  MAPE        : {metrics['mape']:.1f} %")
     print("─" * 50)
     print()
 
@@ -75,6 +83,8 @@ def evaluate():
             f"  {label:<12} {row['generation']:>8.1f}   "
             f"{pred_val:>10.1f}   {err:>+8.1f}   {err_pct:>+7.1f}%"
         )
+
+    return metrics
 
 
 if __name__ == "__main__":
