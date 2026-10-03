@@ -1,0 +1,13 @@
+Year,Month,Total Generation (kWh),Total Export to CEB (kWh),Total Import from CEB (kWh),Creditable Export (kWh),Total Cash (LKR),Cash Received (LKR),Merge Group,Exclude From Training,Notes
+2023,January,90,548,67,481,17797.00,17797.00,,YES,Partial month; excluded from training
+2023,February,681,554,70,484,17908.00,17908.00,,,
+2023,March,673,618,53,565,20905.00,20905.00,,,
+2023,April,637,545,69,476,17612.00,17612.00,,,
+2023,May,627,579,59,520,19240.00,19240.00,,,
+2023,June,559,494,51,443,16391.00,16391.00,,,
+2023,July,557,498,65,433,16021.00,16021.00,,,
+2023,August,485,459,68,391,14467.00,14467.00,,,
+2023,September,479,397,59,338,12506.00,12506.00,,,
+2023,October,511,421,64,357,13209.00,13209.00,,,
+2023,November,589,557,57,500,18500.00,18500.00,,,
+2023,December,560,487,54,433,16021.00,16021.00,,,

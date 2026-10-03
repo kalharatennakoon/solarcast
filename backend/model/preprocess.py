@@ -12,15 +12,16 @@ Business rules applied:
     month already has its own row in the CSV with the 50/50 split CEB values
     applied at source. Both rows are included as separate training records.
   - Rows with no creditable_export are dropped (incomplete CEB reading).
+
+The CSV folder comes from SOLARCAST_DATA_DIR (see settings.py).
 """
 
 import calendar
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-DATA_DIR = Path(__file__).parent.parent / "data"
+from settings import get_settings
 
 MONTH_ORDER = {
     "January": 1, "February": 2, "March": 3, "April": 4,
@@ -33,22 +34,28 @@ NUMERIC_COLS = [
     "creditable_export", "total_cash", "cash_received",
 ]
 
+COLUMNS = [
+    "year", "month", "generation", "export", "import_kwh",
+    "creditable_export", "total_cash", "cash_received",
+    "merge_group", "exclude_training", "notes",
+]
+
 
 def load_raw() -> pd.DataFrame:
     """Concatenate all *-summary.csv files into one raw DataFrame."""
+    data_dir = get_settings().data_dir
     frames = []
-    for path in sorted(DATA_DIR.glob("*-summary.csv")):
+    for path in sorted(data_dir.glob("*-summary.csv")):
         df = pd.read_csv(path, dtype=str)
+        if len(df.columns) != len(COLUMNS):
+            raise ValueError(
+                f"{path.name}: expected {len(COLUMNS)} columns, found {len(df.columns)}"
+            )
+        df.columns = COLUMNS
         frames.append(df)
     if not frames:
-        raise FileNotFoundError(f"No CSV files found in {DATA_DIR}")
+        raise FileNotFoundError(f"No CSV files found in {data_dir}")
     raw = pd.concat(frames, ignore_index=True)
-
-    raw.columns = [
-        "year", "month", "generation", "export", "import_kwh",
-        "creditable_export", "total_cash", "cash_received",
-        "merge_group", "exclude_training", "notes",
-    ]
 
     for col in NUMERIC_COLS:
         raw[col] = pd.to_numeric(raw[col], errors="coerce")

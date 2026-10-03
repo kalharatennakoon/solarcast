@@ -1,6 +1,6 @@
 from typing import Optional
-from pydantic import BaseModel
 
+from pydantic import BaseModel
 
 # ── History ───────────────────────────────────────────────────────────────────
 
@@ -64,3 +64,11 @@ class TrainResponse(BaseModel):
 class StatusResponse(BaseModel):
     modelTrained: bool
     lastTrainedAt: Optional[str]
+
+
+# ── Health ────────────────────────────────────────────────────────────────────
+
+class HealthResponse(BaseModel):
+    status: str
+    modelLoaded: Optional[bool] = None
+    detail: Optional[str] = None

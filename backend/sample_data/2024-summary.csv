@@ -1,0 +1,13 @@
+Year,Month,Total Generation (kWh),Total Export to CEB (kWh),Total Import from CEB (kWh),Creditable Export (kWh),Total Cash (LKR),Cash Received (LKR),Merge Group,Exclude From Training,Notes
+2024,January,622,562.5,61,501.5,18555.50,18555.50,Jan-Feb,NO,One reading for both months; split equally
+2024,February,674,562.5,61,501.5,18555.50,18555.50,Jan-Feb,NO,One reading for both months; split equally
+2024,March,641,543,67,476,17612.00,17612.00,,,
+2024,April,664,570,56,514,19018.00,19018.00,,,
+2024,May,647,531,54,477,17649.00,17649.00,,,
+2024,June,582,534,63,471,17427.00,17427.00,,,
+2024,July,499,458,59,399,14763.00,14763.00,,,
+2024,August,486,399,52,347,12839.00,12839.00,,,
+2024,September,468,407,61,346,12802.00,12802.00,,,
+2024,October,494,442,61,381,14097.00,14097.00,,,
+2024,November,553,468,51,417,15429.00,15429.00,,,
+2024,December,568,473,58,415,15355.00,15355.00,,,

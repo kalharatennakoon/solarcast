@@ -1,0 +1,7 @@
+# Development and CI tooling, on top of the runtime lock file.
+-r requirements.txt
+
+pytest==9.0.2
+pytest-cov==7.1.0
+httpx==0.28.1
+ruff==0.16.10

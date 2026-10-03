@@ -1,0 +1,23 @@
+# Keep the image small and make sure private data and local models never
+# end up inside it — they are mounted at run time instead.
+data/
+sample_data/
+model/saved_models/
+tests/
+scripts/
+
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+Dockerfile
+.dockerignore
+requirements.in
+requirements-dev.txt
+pyproject.toml
+start.sh

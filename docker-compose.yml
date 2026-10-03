@@ -1,0 +1,57 @@
+# Runs the whole of SolarCast locally:
+#
+#   docker compose up --build
+#
+#   Dashboard  http://localhost:8080
+#   API docs   http://localhost:8000/docs
+#
+# To try it without the private inverter data, use the synthetic sample set:
+#
+#   SOLARCAST_DATA_PATH=./backend/sample_data docker compose up --build
+
+name: solarcast
+
+services:
+  backend:
+    build: ./backend
+    image: ${BACKEND_IMAGE:-solarcast-backend:dev}
+    environment:
+      TZ: ${TZ:-Asia/Colombo}
+      SOLARCAST_RATE_PER_UNIT: ${SOLARCAST_RATE_PER_UNIT:-37}
+      # The browser talks to nginx on :8080, which forwards to the API, so
+      # this only matters when calling the API on :8000 from another origin.
+      SOLARCAST_CORS_ORIGINS: ${SOLARCAST_CORS_ORIGINS:-http://localhost:8080,http://localhost:5173}
+    volumes:
+      # CSV summaries: read-only, never baked into the image.
+      - ${SOLARCAST_DATA_PATH:-./backend/data}:/data:ro
+      # Trained models survive container restarts in a named volume.
+      - models:/models
+    ports:
+      - "8000:8000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    image: ${FRONTEND_IMAGE:-solarcast-frontend:dev}
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  models:

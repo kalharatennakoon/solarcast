@@ -1,8 +1,8 @@
 """
 train.py
 --------
-Trains the solar prediction model and saves all artefacts to
-model/saved_models/.
+Trains the solar prediction model and saves all artefacts to the models
+folder (SOLARCAST_MODELS_DIR, default model/saved_models/).
 
 Models trained
 --------------
@@ -20,19 +20,26 @@ Models trained
 Split: 70% training / 30% test (chronological order, never shuffled).
 """
 
-import json
-from datetime import datetime
-from pathlib import Path
+from dataclasses import dataclass
 
-import joblib
-import numpy as np
 import pandas as pd
 from prophet import Prophet
 
+from model.artefacts import models_dir, save_artefacts
 from model.preprocess import preprocess, train_test_split
 
-MODELS_DIR = Path(__file__).parent / "saved_models"
-MODELS_DIR.mkdir(exist_ok=True)
+
+@dataclass(frozen=True)
+class TrainingSummary:
+    training_records: int
+    test_records: int
+    train_period: str
+    test_period: str
+    trained_at: str
+
+
+def _period(df: pd.DataFrame) -> str:
+    return f"{df['ds'].min().strftime('%b %Y')} → {df['ds'].max().strftime('%b %Y')}"
 
 
 def compute_seasonal_ratios(train_df: pd.DataFrame) -> dict:
@@ -75,14 +82,14 @@ def compute_seasonal_ratios(train_df: pd.DataFrame) -> dict:
     return ratios
 
 
-def train():
+def train() -> TrainingSummary:
     df = preprocess()
     train_df, test_df = train_test_split(df, train_ratio=0.70)
 
     print(f"Training records : {len(train_df)}")
-    print(f"  {train_df['ds'].min().strftime('%b %Y')} → {train_df['ds'].max().strftime('%b %Y')}")
+    print(f"  {_period(train_df)}")
     print(f"Test records     : {len(test_df)}")
-    print(f"  {test_df['ds'].min().strftime('%b %Y')} → {test_df['ds'].max().strftime('%b %Y')}")
+    print(f"  {_period(test_df)}")
 
     # ── Prophet — solar generation forecast ──────────────────────────────
     prophet_df = train_df[["ds", "generation"]].rename(columns={"generation": "y"})
@@ -109,31 +116,21 @@ def train():
     )
     model.fit(prophet_df)
 
-    model_path = MODELS_DIR / "prophet_generation.pkl"
-    joblib.dump(model, model_path)
-    print(f"\nProphet model saved → {model_path}")
-
     # ── Seasonal ratio tables ─────────────────────────────────────────────
     ratios = compute_seasonal_ratios(train_df)
-    ratios_path = MODELS_DIR / "seasonal_ratios.json"
-    with open(ratios_path, "w") as f:
-        json.dump(ratios, f, indent=2)
-    print(f"Seasonal ratios saved → {ratios_path}")
 
-    # ── Save test set for evaluate.py ────────────────────────────────────
-    test_path = MODELS_DIR / "test_set.csv"
-    test_df.to_csv(test_path, index=False)
-    print(f"Test set saved → {test_path}")
-
-    # ── Record training timestamp (newest first, local time) ─────────────
-    trained_at = datetime.now().strftime("%b %d, %Y, %I:%M:%S %p")
-    ts_path = MODELS_DIR / "trained_at.txt"
-    existing = ts_path.read_text().strip() if ts_path.exists() else ""
-    entries = [trained_at] + ([existing] if existing else [])
-    ts_path.write_text("\n".join(entries))
+    # ── Persist model, ratios, test set and timestamp (newest first) ─────
+    trained_at = save_artefacts(model, ratios, test_df)
+    print(f"\nArtefacts saved → {models_dir()}")
     print(f"Trained at: {trained_at}")
 
-    return model, ratios
+    return TrainingSummary(
+        training_records=len(train_df),
+        test_records=len(test_df),
+        train_period=_period(train_df),
+        test_period=_period(test_df),
+        trained_at=trained_at,
+    )
 
 
 if __name__ == "__main__":

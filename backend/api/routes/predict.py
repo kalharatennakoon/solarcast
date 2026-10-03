@@ -1,39 +1,29 @@
-from pathlib import Path
+from fastapi import APIRouter, Query
 
-from fastapi import APIRouter
-
-from api.schemas import PredictResponse, PredictionMonth, Interval, StatusResponse
+from api.metrics import PREDICTED_MONTHS
+from api.model_store import model_store
+from api.schemas import Interval, PredictionMonth, PredictResponse, StatusResponse
+from model.artefacts import read_trained_at
+from model.predict import predict as run_predict
 
 router = APIRouter()
 
-MODELS_DIR = Path(__file__).parent.parent.parent / "model" / "saved_models"
-
-
-def _model_trained() -> bool:
-    return (MODELS_DIR / "prophet_generation.pkl").exists()
-
-
-def _read_trained_at() -> str | None:
-    path = MODELS_DIR / "trained_at.txt"
-    if not path.exists():
-        return None
-    first_line = path.read_text().splitlines()[0].strip()
-    return first_line or None
+MAX_MONTHS = 12
 
 
 @router.get("/predict", response_model=PredictResponse)
-def get_predictions(months: int = 1):
+def get_predictions(months: int = Query(default=1, ge=1, le=MAX_MONTHS)):
     """
-    Returns predictions for the next N months (1, 3, 6, or 12).
+    Returns predictions for the next N months (1 to 12).
     Returns modelTrained: false with an empty list if the model has
     not been trained yet — run POST /train first.
     """
-    if not _model_trained():
+    artefacts = model_store.get()
+    if artefacts is None:
         return PredictResponse(modelTrained=False, predictions=[])
 
-    from model.predict import predict as run_predict
-
-    raw = run_predict(months=months)
+    raw = run_predict(months=months, artefacts=artefacts)
+    PREDICTED_MONTHS.inc(len(raw))
 
     predictions = [
         PredictionMonth(
@@ -51,7 +41,8 @@ def get_predictions(months: int = 1):
 @router.get("/status", response_model=StatusResponse)
 def get_status():
     """Returns whether the model has been trained and when it was last trained."""
+    trained = model_store.get() is not None
     return StatusResponse(
-        modelTrained=_model_trained(),
-        lastTrainedAt=_read_trained_at(),
+        modelTrained=trained,
+        lastTrainedAt=read_trained_at() if trained else None,
     )

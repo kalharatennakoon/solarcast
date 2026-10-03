@@ -1,0 +1,14 @@
+# Direct runtime dependencies. Edit this file, then run `make lock`
+# to regenerate requirements.txt (the fully pinned lock file).
+
+# Data & ML
+pandas==3.0.2
+numpy==2.4.4
+prophet==1.3.0
+joblib==1.5.3
+
+# API
+fastapi==0.135.3
+uvicorn[standard]==0.42.0
+pydantic==2.12.5
+prometheus-client==0.26.0
