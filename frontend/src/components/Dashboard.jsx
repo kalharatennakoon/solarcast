@@ -5,8 +5,6 @@ import HistoryTable from './HistoryTable'
 import { DEMO_MODE, fetchHistory, fetchPredictions, fetchStatus, trainModel } from '../api'
 import './Dashboard.css'
 
-const REPO_URL = 'https://github.com/kalharatennakoon/solarcast'
-
 
 function formatTrainedAt(timestamp) {
   return timestamp
@@ -116,9 +114,7 @@ export default function Dashboard() {
       {DEMO_MODE && (
         <div className="demo-banner" role="note">
           <strong>Demo with synthetic data.</strong>{' '}
-          These figures are generated, not readings from a real solar system,
-          and model training is switched off here.{' '}
-          <a href={REPO_URL} target="_blank" rel="noreferrer">See the project on GitHub</a>.
+          These figures are generated, not readings from a real solar system.
         </div>
       )}
 
@@ -143,14 +139,16 @@ export default function Dashboard() {
               Last trained: {formatTrainedAt(lastTrainedAt)}
             </span>
           )}
-          <button
-            className="train-btn"
-            onClick={handleTrain}
-            disabled={DEMO_MODE || modelStatus === 'training' || !backendUp}
-            title={DEMO_MODE ? 'Training is switched off in the demo' : undefined}
-          >
-            {modelStatus === 'training' ? 'Training…' : 'Train Model'}
-          </button>
+          {/* The demo site has no backend to train on, so there is no button. */}
+          {!DEMO_MODE && (
+            <button
+              className="train-btn"
+              onClick={handleTrain}
+              disabled={modelStatus === 'training' || !backendUp}
+            >
+              {modelStatus === 'training' ? 'Training…' : 'Train Model'}
+            </button>
+          )}
         </div>
       </div>
 

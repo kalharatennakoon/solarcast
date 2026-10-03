@@ -15,11 +15,6 @@
   color: #78350f;
 }
 
-.demo-banner a {
-  color: #92400e;
-  font-weight: 600;
-}
-
 /* ── Controls bar ── */
 .controls-bar {
   display: flex;
