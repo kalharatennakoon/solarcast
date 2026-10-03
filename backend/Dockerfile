@@ -6,12 +6,13 @@ FROM python:3.14-slim AS builder
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
 
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# The virtual environment is created without pip: the builder's own pip
+# installs into it, so no package installer is carried into the runtime image.
+RUN python -m venv --without-pip /opt/venv
 
 # Dependencies change far less often than code, so they get their own layer.
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip --python /opt/venv/bin/python install -r requirements.txt
 
 
 # ── Runtime stage: only the virtual environment and the application code ─────
@@ -23,6 +24,14 @@ ENV PATH="/opt/venv/bin:$PATH" \
     MPLCONFIGDIR=/tmp/matplotlib \
     SOLARCAST_DATA_DIR=/data \
     SOLARCAST_MODELS_DIR=/models
+
+# Apply OS security updates released since the base image was built, and
+# remove the base image's pip. Nothing installs packages at run time, and pip
+# bundles its own copies of libraries that would otherwise show up in scans.
+RUN apt-get update \
+ && apt-get upgrade --yes \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip uninstall --yes pip
 
 # Run as an unprivileged user. /data is mounted read-only at run time;
 # /models is the only place the application writes to.
