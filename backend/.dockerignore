@@ -20,4 +20,3 @@ Dockerfile
 requirements.in
 requirements-dev.txt
 pyproject.toml
-start.sh
