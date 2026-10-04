@@ -1,0 +1,95 @@
+# The backend: one pod running the FastAPI app that trains the model and
+# answers /history, /predict and /train.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: solarcast
+spec:
+  replicas: 1
+  # Stop the old pod before starting the new one. The models volume can only
+  # be attached to one pod at a time, and two pods must never write to it.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: backend
+        app.kubernetes.io/part-of: solarcast
+    spec:
+      # The app never talks to the Kubernetes API, so it gets no API token.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        # Group ownership applied to mounted volumes, where the storage supports it.
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: backend
+          # No tag here: each environment pins its own in its overlay.
+          image: randilt/solarcast-backend
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: TZ
+              value: Asia/Colombo
+          # Gives the app up to 60 s to start before the other probes begin.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+          # Failing this restarts the container.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          # Failing this only stops traffic being sent to the pod.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: data
+              mountPath: /data
+              readOnly: true
+            - name: models
+              mountPath: /models
+      volumes:
+        # Scratch space, because the root filesystem is read-only.
+        - name: tmp
+          emptyDir: {}
+        # The CSV summaries, one file per key of the Secret. The Secret is
+        # created from a local folder and is never stored in Git.
+        - name: data
+          secret:
+            secretName: solarcast-data
+        # Trained models, kept on a persistent volume so they survive pod restarts.
+        - name: models
+          persistentVolumeClaim:
+            claimName: backend-models

@@ -1,0 +1,11 @@
+# Everything every environment has in common. Not applied on its own:
+# an overlay in ../overlays adds the namespace and pins the image versions.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - backend-models-pvc.yaml
+  - backend-deployment.yaml
+  - backend-service.yaml
+  - frontend-deployment.yaml
+  - frontend-service.yaml

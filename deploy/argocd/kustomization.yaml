@@ -1,0 +1,15 @@
+# Installs Argo CD itself, pinned to one release so the install is repeatable.
+# To upgrade, change the version in the URL and apply again.
+#
+#   kubectl apply -k deploy/argocd --server-side --force-conflicts
+#
+# --server-side is required: some of Argo CD's custom resource definitions
+# are too large for kubectl's default client-side apply.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  - namespace.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/install.yaml

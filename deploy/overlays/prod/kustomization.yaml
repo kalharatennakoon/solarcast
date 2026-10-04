@@ -1,0 +1,30 @@
+# Prod: runs on the real inverter data. Its image tags only change when
+# someone deliberately promotes a build by editing them here.
+#
+#   kubectl kustomize deploy/overlays/prod    preview the final manifests
+#   kubectl apply -k deploy/overlays/prod     apply them
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: solarcast-prod
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+labels:
+  - pairs:
+      environment: prod
+    includeSelectors: false
+
+# Two frontend pods, so the dashboard stays up if one is restarted. The
+# backend stays at one: it owns the single models volume.
+replicas:
+  - name: frontend
+    count: 2
+
+images:
+  - name: randilt/solarcast-backend
+    newTag: ca74278cb2a1f547eb48c03e668f11fece1b7cf9
+  - name: randilt/solarcast-frontend
+    newTag: ca74278cb2a1f547eb48c03e668f11fece1b7cf9

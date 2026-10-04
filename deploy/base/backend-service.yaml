@@ -1,0 +1,17 @@
+# A stable name and address for the backend pod. Inside the namespace, other
+# pods reach it at http://backend:8000 no matter which pod is behind it.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: solarcast
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
