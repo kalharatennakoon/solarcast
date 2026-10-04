@@ -1,0 +1,29 @@
+# Tells Argo CD: keep the solarcast-dev namespace matching deploy/overlays/dev
+# on the main branch of the repository.
+# Dev: the synthetic-data environment. It will follow main automatically once CI
+# updates its image tag (step 6).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: solarcast-dev
+  namespace: argocd
+spec:
+  project: default
+
+  # Where the desired state lives.
+  source:
+    repoURL: https://github.com/kalharatennakoon/solarcast.git
+    targetRevision: main
+    path: deploy/overlays/dev
+
+  # Where it should run: this same cluster.
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: solarcast-dev
+
+  syncPolicy:
+    automated:
+      # Delete cluster objects that were removed from Git.
+      prune: true
+      # Undo manual changes made directly in the cluster.
+      selfHeal: true

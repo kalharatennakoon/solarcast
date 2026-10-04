@@ -1,0 +1,29 @@
+# Tells Argo CD: keep the solarcast-prod namespace matching deploy/overlays/prod
+# on the main branch of the repository.
+# Prod: the real-data environment. It changes only when someone edits the image
+# tag in deploy/overlays/prod, which is the deliberate promotion step.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: solarcast-prod
+  namespace: argocd
+spec:
+  project: default
+
+  # Where the desired state lives.
+  source:
+    repoURL: https://github.com/kalharatennakoon/solarcast.git
+    targetRevision: main
+    path: deploy/overlays/prod
+
+  # Where it should run: this same cluster.
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: solarcast-prod
+
+  syncPolicy:
+    automated:
+      # Delete cluster objects that were removed from Git.
+      prune: true
+      # Undo manual changes made directly in the cluster.
+      selfHeal: true

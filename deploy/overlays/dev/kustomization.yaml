@@ -1,0 +1,24 @@
+# Dev: runs on the synthetic sample data and follows main automatically.
+#
+#   kubectl kustomize deploy/overlays/dev     preview the final manifests
+#   kubectl apply -k deploy/overlays/dev      apply them
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: solarcast-dev
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+labels:
+  - pairs:
+      environment: dev
+    includeSelectors: false
+
+# Which build this environment runs. The tag is the Git commit CI built from.
+images:
+  - name: randilt/solarcast-backend
+    newTag: ca74278cb2a1f547eb48c03e668f11fece1b7cf9
+  - name: randilt/solarcast-frontend
+    newTag: ca74278cb2a1f547eb48c03e668f11fece1b7cf9
