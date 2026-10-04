@@ -22,8 +22,10 @@ cloud cluster.
 
 ## Design decisions
 
-- **One repository.** Kubernetes manifests will live in `deploy/` next to the
+- **One repository.** Kubernetes manifests live in `deploy/` next to the
   code, so the whole system can be read in one place.
+- **CI never touches the cluster.** It records each new build in Git, and
+  Argo CD applies it. Git is the single source of truth for what runs.
 - **Private data stays out of Git.** The real inverter CSVs are never
   committed or baked into an image. They are mounted at run time (phase 1) and
   will live in MinIO (phase 3). Tests and CI use the synthetic
@@ -44,14 +46,35 @@ cloud cluster.
   file changes; `months` is validated (1–12); liveness, readiness and
   Prometheus metrics endpoints; CORS restricted to configured origins; only
   one training run at a time; artefacts written atomically.
-- **Tests** — 35 pytest tests covering preprocessing, the model pipeline and
+- **Tests** — pytest tests covering preprocessing, the model pipeline and
   the API, running on synthetic data.
 - **Containers** — multi-stage, non-root images; nginx serves the dashboard
   and proxies `/api`; Compose runs the backend with a read-only filesystem.
 - **CI** — lint, test, build, Trivy scan, container smoke test; multi-arch
   images published to Docker Hub from `main`.
 
+## Phase 2 — what changed
+
+- **Manifests** — Deployments and Services for backend and frontend in
+  `deploy/base`, with probes, resource requests and the same hardening as the
+  containers (non-root, read-only root filesystem, no capabilities).
+- **Storage** — CSV data is mounted from a Secret that is created from a
+  local folder and never stored in Git; trained models live on a
+  PersistentVolumeClaim.
+- **Environments** — Kustomize overlays for dev (synthetic data, follows
+  `main`) and prod (real data, promoted by pull request, two frontend pods).
+- **Argo CD** — installed from a pinned release; one Application per
+  environment with automated sync, pruning and self-healing.
+- **Delivery** — after publishing images, CI commits the new tag to the dev
+  overlay; Argo CD rolls it out. Promotion and rollback are Git commits.
+- **Bootstrap** — `scripts/k8s-bootstrap.sh` sets up a cluster from nothing.
+
 ## Known gaps carried forward
+
+- The dashboards are reached with `kubectl port-forward`. There is no Ingress
+  yet.
+- The Argo CD applications were created with `kubectl apply`; they are not
+  yet managed by Argo CD itself (the "app of apps" pattern).
 
 - `POST /train` is unauthenticated. It is removed from the public API in
   phase 3, when training becomes a cluster job.
