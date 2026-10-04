@@ -38,6 +38,8 @@ Monthly records from April 2024 onwards. Two periods are excluded from training:
 | Storage | CSV files |
 | Containers | Docker (multi-stage, non-root images), nginx, Docker Compose |
 | CI | GitHub Actions — ruff, pytest, image build, Trivy scan, smoke test |
+| Orchestration | Kubernetes, with Kustomize overlays for dev and prod |
+| Delivery | Argo CD (GitOps); CI records each new build in Git |
 | Observability | Prometheus metrics, liveness and readiness endpoints |
 
 ## Project Structure
@@ -68,7 +70,14 @@ solarcast/
 ├── frontend/                   # React dashboard
 │   ├── Dockerfile
 │   └── nginx/                  # nginx config: serves the app, proxies /api
-├── scripts/smoke-test.sh       # End-to-end check of the running containers
+├── deploy/
+│   ├── base/                   # Kubernetes manifests shared by every environment
+│   ├── overlays/               # dev and prod: namespace, image tag, differences
+│   └── argocd/                 # Argo CD install and the two applications
+├── scripts/
+│   ├── smoke-test.sh           # End-to-end check of the running containers
+│   ├── k8s-bootstrap.sh        # Sets up Argo CD and both environments on a cluster
+│   └── k8s-load-data.sh        # Loads a folder of CSVs into a namespace
 ├── docker-compose.yml
 ├── Makefile
 ├── .github/workflows/          # ci.yml (test, build, publish), pages.yml (demo site)
@@ -202,13 +211,76 @@ Every pull request runs [the CI workflow](.github/workflows/ci.yml): lint and
 tests, a frontend build, both image builds, a Trivy vulnerability scan and an
 end-to-end smoke test of the containers on synthetic data.
 
-Pushes to `main` also publish multi-architecture images to Docker Hub, once
-these are set under **Settings → Secrets and variables → Actions**:
+Pushes to `main` also publish multi-architecture images to Docker Hub and
+then commit the new image tag to the dev environment (see
+[Kubernetes and GitOps](#kubernetes-and-gitops)), once these are set under
+**Settings → Secrets and variables → Actions**:
 
 | Kind | Name | Value |
 |---|---|---|
 | Variable | `DOCKERHUB_USERNAME` | Your Docker Hub username |
 | Secret | `DOCKERHUB_TOKEN` | A Docker Hub access token with read and write permission |
+
+## Kubernetes and GitOps
+
+The app runs on Kubernetes in two environments, and Git is the only way to
+change either of them. Nobody runs `kubectl apply` to deploy: Argo CD watches
+this repository and keeps the cluster matching it.
+
+```mermaid
+flowchart LR
+    dev([Developer]) -- pull request --> repo[(GitHub repo)]
+    repo -- merge to main --> ci[CI: test, build, scan]
+    ci -- push images --> hub[(Docker Hub)]
+    ci -- commit dev image tag --> repo
+    repo -. watched by .-> argo[Argo CD]
+    subgraph cluster [Kubernetes cluster]
+        argo -- syncs --> devns[solarcast-dev]
+        argo -- syncs --> prodns[solarcast-prod]
+    end
+    hub -. images pulled by .-> cluster
+```
+
+1. A merge to `main` runs CI, which publishes images tagged with the commit hash.
+2. CI then commits that hash to `deploy/overlays/dev`. It never touches the cluster.
+3. Argo CD sees the commit and rolls the dev environment out.
+4. Prod changes only when someone edits the tag in `deploy/overlays/prod`.
+
+### Environments
+
+| | Dev (`solarcast-dev`) | Prod (`solarcast-prod`) |
+|---|---|---|
+| Data | Synthetic sample data | Real inverter readings |
+| Image version | Follows `main` automatically | Promoted deliberately by pull request |
+| Frontend pods | 1 | 2 |
+
+Both are built from the same manifests in `deploy/base`; each overlay sets
+only the namespace, the image tag and the differences above. In both, CSV data
+is a Secret created from a local folder (it is never in Git), and trained
+models live on a persistent volume, so they survive pod restarts.
+
+### Set up a cluster
+
+With `kubectl` pointing at Docker Desktop's built-in Kubernetes:
+
+```bash
+./scripts/k8s-bootstrap.sh
+```
+
+This installs Argo CD, stores a read-only GitHub token so it can read the
+repository, loads the data into both namespaces and creates the two Argo CD
+applications. It prints how to open the Argo CD UI and both dashboards.
+
+### Promote and roll back
+
+```bash
+# Promote: point prod at a build, then open a pull request and merge it.
+sed -i '' -E 's/^( *newTag: ).*/\1<commit hash>/' deploy/overlays/prod/kustomization.yaml
+```
+
+To roll back, revert that commit. Because every deployment is a commit, the
+Git history is the record of what ran where and when. Manual changes to the
+cluster do not last: Argo CD reverts them to what Git says.
 
 ## Model Summary
 
