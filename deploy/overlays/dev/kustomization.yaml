@@ -19,6 +19,6 @@ labels:
 # Which build this environment runs. The tag is the Git commit CI built from.
 images:
   - name: randilt/solarcast-backend
-    newTag: 9f201ef069e0247872731c8d387e86987bb967e3
+    newTag: 08d7a3b067b5025ec7b705c8b64785fa971514e4
   - name: randilt/solarcast-frontend
-    newTag: 9f201ef069e0247872731c8d387e86987bb967e3
+    newTag: 08d7a3b067b5025ec7b705c8b64785fa971514e4
